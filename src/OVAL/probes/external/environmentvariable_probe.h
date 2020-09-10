@@ -17,19 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * Authors:
- *      "Jan Černý" <jcerny@redhat.com>
+ *      Jan Černý <jcerny@redhat.com>
  */
 
-#ifndef OPENSCAP_PROBE_MAIN_H
-#define OPENSCAP_PROBE_MAIN_H
+#ifndef OPENSCAP_EXT_ENVIRONMENTVARIABLE_PROBE_H
+#define OPENSCAP_EXT_ENVIRONMENTVARIABLE_PROBE_H
 
-struct probe_common_main_argument {
-	oval_subtype_t subtype;
-	sch_queuedata_t *queuedata;
-#ifdef EXTERNAL_PROBE_COLLECT
-    oval_external_probe_eval_fn ext_probe_eval_fn;
-#endif
-};
-void *probe_common_main(void *);
+#include "probe-api.h"
 
-#endif /* OPENSCAP_PROBE_MAIN_H */
+int ext_environmentvariable_probe_main(probe_ctx *ctx, void *arg);
+
+#endif /* OPENSCAP_EXT_ENVIRONMENTVARIABLE_PROBE_H */

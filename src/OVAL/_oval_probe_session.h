@@ -45,6 +45,9 @@ struct oval_probe_session {
         struct oval_syschar_model *sys_model; /**< system characteristics model */
         char         *dir;  /**< probe session directory */
         uint32_t      flg;  /**< probe session flags */
+#ifdef EXTERNAL_PROBE_COLLECT
+        oval_external_probe_eval_fn ext_probe_eval_fn;
+#endif
 };
 
 #endif /* _OVAL_PROBE_SESSION */

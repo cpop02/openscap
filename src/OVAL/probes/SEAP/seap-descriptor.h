@@ -21,6 +21,7 @@
  */
 
 #pragma once
+#include "oval_external_probe.h"
 #ifndef _SEAP_DESCRIPTOR_H
 #define _SEAP_DESCRIPTOR_H
 
@@ -59,8 +60,11 @@ typedef struct {
         SEAP_cmdid_t   next_cid;
         SEAP_cmdtbl_t *cmd_c_table; /* Local SEAP commands */
         SEAP_cmdtbl_t *cmd_w_table; /* Waiting SEAP commands */
-    oval_subtype_t subtype;
+        oval_subtype_t subtype;
 	struct probe_common_main_argument *arg;
+#ifdef EXTERNAL_PROBE_COLLECT
+        oval_external_probe_eval_fn ext_probe_eval_fn;
+#endif
 } SEAP_desc_t;
 
 #define SEAP_DESC_FDIN  0x00000001
@@ -73,7 +77,12 @@ typedef struct {
 #define SEAP_MAX_OPENDESC 128
 #define SDTABLE_REALLOC_ADD 4
 
+#ifdef EXTERNAL_PROBE_COLLECT
+int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data, oval_external_probe_eval_fn ext_probe_eval_fn);
+#else
 int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data);
+#endif
+
 int          SEAP_desc_del (SEAP_desctable_t *sd_table, int sd);
 SEAP_desc_t *SEAP_desc_get (SEAP_desctable_t *sd_table, int sd);
 

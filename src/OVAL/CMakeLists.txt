@@ -19,6 +19,7 @@ set (OVAL_SOURCES
     "oval_definitions_impl.h"
     "oval_entity.c"
     "oval_enumerations.c"
+    "oval_external_probe_result.c"
     "oval_filter.c"
     "oval_generator.c"
     "oval_glob_to_regex.c"

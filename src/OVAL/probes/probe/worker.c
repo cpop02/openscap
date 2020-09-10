@@ -32,6 +32,10 @@
 #include <pthread.h>
 #include <errno.h>
 
+#ifndef OS_WINDOWS
+#include <unistd.h>
+#endif
+
 #if defined(OS_FREEBSD)
 #include <pthread_np.h>
 #endif
@@ -1055,6 +1059,9 @@ SEXP_t *probe_worker(probe_t *probe, SEAP_msg_t *msg_in, int *ret)
 		SEXP_t *varrefs, *mask;
 
 		pctx.offline_mode = probe->selected_offline_mode;
+#ifdef EXTERNAL_PROBE_COLLECT
+		pctx.ext_probe_eval_fn = probe->SEAP_ctx->ext_probe_eval_fn;
+#endif
 
 		/* simple object */
                 pctx.icache  = probe->icache;

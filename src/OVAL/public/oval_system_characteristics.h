@@ -54,7 +54,8 @@ typedef enum {
 	SYSCHAR_FLAG_INCOMPLETE = 3,
 	SYSCHAR_FLAG_DOES_NOT_EXIST = 4,
 	SYSCHAR_FLAG_NOT_COLLECTED = 5,
-	SYSCHAR_FLAG_NOT_APPLICABLE = 6
+	SYSCHAR_FLAG_NOT_APPLICABLE = 6,
+	SYSCHAR_FLAG_PENDING_COLLECT = 7
 } oval_syschar_collection_flag_t;
 
 /// System characteristics status
@@ -63,7 +64,8 @@ typedef enum {
 	SYSCHAR_STATUS_ERROR = 1,
 	SYSCHAR_STATUS_EXISTS = 2,
 	SYSCHAR_STATUS_DOES_NOT_EXIST = 3,
-	SYSCHAR_STATUS_NOT_COLLECTED = 4
+	SYSCHAR_STATUS_NOT_COLLECTED = 4,
+	SYSCHAR_STATUS_PENDING_COLLECT = 5
 } oval_syschar_status_t;
 
 /// Message level.
@@ -184,8 +186,6 @@ struct oval_variable_binding;
  * @struct oval_variable_binding_iterator
  */
 struct oval_variable_binding_iterator;
-
-
 
 
 
@@ -953,8 +953,10 @@ OSCAP_API struct oval_variable_binding *oval_variable_binding_iterator_next(stru
 OSCAP_API void oval_variable_binding_iterator_free(struct oval_variable_binding_iterator *);
 /** @} */
 
+
 /**
  * @}END OVALSYS
  * @}END OVAL
  */
 #endif
+

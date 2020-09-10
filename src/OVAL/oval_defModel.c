@@ -58,7 +58,7 @@ typedef struct oval_definition_model {
 	struct oval_string_map *state_map;
 	struct oval_string_map *variable_map;
 	struct oval_collection *bound_variable_models;
-        char *schema;
+    char *schema;
 	struct oval_string_map *vardef_map;		///< look-up table for efficient @variable_instance processing
 } oval_definition_model_t;
 

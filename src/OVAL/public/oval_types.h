@@ -325,7 +325,8 @@ typedef enum {
         OVAL_RESULT_UNKNOWN = 4, /**< Characteristics being evaluated can not be found in the system characteristic. */
         OVAL_RESULT_ERROR = 8,  /**< Characteristics being evaluated exist in the system characteristic file but there was an error either collecting information or in performing anaylsis. */
         OVAL_RESULT_NOT_EVALUATED = 16, /**< Choice was made not to evaluate the given definition or test. */
-        OVAL_RESULT_NOT_APPLICABLE = 32 /**< Definition or test being evaluated is not valid on the given platform. */
+        OVAL_RESULT_NOT_APPLICABLE = 32, /**< Definition or test being evaluated is not valid on the given platform. */
+		OVAL_RESULT_PENDING_COLLECT = 64 /**< One or more of the characteristics being evaluated is waiting for collection from an external probe (NON-STANDARD). */
 } oval_result_t;
 /** @} */
 /** @} */

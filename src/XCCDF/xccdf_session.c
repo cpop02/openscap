@@ -1032,7 +1032,7 @@ int xccdf_session_load_oval(struct xccdf_session *session)
 		}
 
 		/* def_model -> session */
-		struct oval_agent_session *tmp_sess = oval_agent_new_session(tmp_def_model, contents[idx]->href);
+		struct oval_agent_session *tmp_sess = oval_agent_new_session(tmp_def_model, contents[idx]->href, NULL);
 		if (tmp_sess == NULL) {
 			oscap_seterr(OSCAP_EFAMILY_OSCAP, "Failed to create new OVAL agent session for: '%s'.", contents[idx]->href);
 			oval_definition_model_free(tmp_def_model);

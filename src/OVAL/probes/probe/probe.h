@@ -78,11 +78,14 @@ typedef struct {
 } probe_t;
 
 struct probe_ctx {
-        SEXP_t         *probe_in;  /**< S-exp representation of the input object */
-        SEXP_t         *probe_out; /**< collected object */
-        SEXP_t         *filters;   /**< object filters (OVAL 5.8 and higher) */
-        probe_icache_t *icache;    /**< item cache */
+	SEXP_t         *probe_in;  /**< S-exp representation of the input object */
+	SEXP_t         *probe_out; /**< collected object */
+	SEXP_t         *filters;   /**< object filters (OVAL 5.8 and higher) */
+	probe_icache_t *icache;    /**< item cache */
 	int offline_mode;
+#ifdef EXTERNAL_PROBE_COLLECT
+	oval_external_probe_eval_fn ext_probe_eval_fn;
+#endif
 };
 
 typedef enum {

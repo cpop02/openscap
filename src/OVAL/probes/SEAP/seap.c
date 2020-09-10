@@ -64,6 +64,10 @@ static void SEAP_CTX_initdefault (SEAP_CTX_t *ctx)
         ctx->send_timeout = 5;
         ctx->cflags       = 0;
 
+#ifdef EXTERNAL_PROBE_COLLECT
+        ctx->ext_probe_eval_fn = NULL;
+#endif
+
         return;
 }
 
@@ -97,8 +101,11 @@ int SEAP_connect(SEAP_CTX_t *ctx)
         SEAP_desc_t  *dsc;
         int sd;
 
-
+#ifdef EXTERNAL_PROBE_COLLECT
+	sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL, ctx->ext_probe_eval_fn);
+#else
 	sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL);
+#endif
 
         if (sd < 0) {
                 dD("Can't create/add new SEAP descriptor");
@@ -140,7 +147,11 @@ int SEAP_openfd2 (SEAP_CTX_t *ctx, int ifd, int ofd, uint32_t flags)
         SEAP_desc_t *dsc;
         int sd;
 
+#ifdef EXTERNAL_PROBE_COLLECT
+        sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL, ctx->ext_probe_eval_fn);
+#else
         sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL);
+#endif
 
         if (sd < 0) {
                 dD("Can't create/add new SEAP descriptor");
@@ -159,7 +170,11 @@ int SEAP_openfd2 (SEAP_CTX_t *ctx, int ifd, int ofd, uint32_t flags)
 
 int SEAP_add_probe (SEAP_CTX_t *ctx, sch_queuedata_t *data)
 {
+#ifdef EXTERNAL_PROBE_COLLECT
+	int sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, data, ctx->ext_probe_eval_fn);
+#else
 	int sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, data);
+#endif
 	dD("SEAP_add_probe");
 	if (sd < 0) {
 		dD("Can't create/add new SEAP descriptor");
@@ -310,6 +325,13 @@ int __SEAP_recvmsg_process_cmd (SEAP_CTX_t *ctx, int sd, SEAP_cmd_t *cmd)
 
         return (0);
 }
+
+#ifdef EXTERNAL_PROBE_COLLECT
+void SEAP_CTX_set_external_probe_eval_fn(SEAP_CTX_t *ctx, oval_external_probe_eval_fn ext_probe_eval_fn) {
+        _A(ctx != NULL);
+        ctx->ext_probe_eval_fn = ext_probe_eval_fn;
+}
+#endif
 
 static int __SEAP_recvmsg_process_err (SEAP_CTX_t *ctx, int sd, SEAP_err_t *err)
 {

@@ -54,6 +54,9 @@ int sch_queue_connect(SEAP_desc_t *desc)
 	struct probe_common_main_argument *arg = malloc(sizeof(struct probe_common_main_argument));
 	arg->subtype = desc->subtype;
 	arg->queuedata = data;
+#ifdef EXTERNAL_PROBE_COLLECT
+	arg->ext_probe_eval_fn = desc->ext_probe_eval_fn;
+#endif
 	desc->arg = arg;
 
 	pthread_attr_t attr;

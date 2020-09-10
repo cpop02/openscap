@@ -34,12 +34,17 @@ typedef struct oval_probe_session oval_probe_session_t;
 
 #include "oval_system_characteristics.h"
 #include "oscap_export.h"
+#include "oval_external_probe.h"
 
 /**
  * Create and initialize a new probe session
  * @param model system characteristics model
  */
+ #ifdef EXTERNAL_PROBE_COLLECT
+OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_fn ext_probe_eval_fn);
+#else
 OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model);
+#endif
 
 /**
  * Reinitialize already allocated probe session inplace

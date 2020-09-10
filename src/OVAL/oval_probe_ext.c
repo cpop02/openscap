@@ -19,6 +19,7 @@
  * Authors:
  *      "Daniel Kopecek" <dkopecek@redhat.com>
  */
+#include "oval_external_probe.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -58,6 +59,19 @@ static oval_pd_t    *oval_pdtbl_get(oval_pdtbl_t *table, oval_subtype_t type);
 /*
  * oval_pext_
  */
+#ifdef EXTERNAL_PROBE_COLLECT
+oval_pext_t *oval_pext_new(oval_external_probe_eval_fn ext_eval_fn)
+{
+        oval_pext_t *pext = malloc(sizeof(oval_pext_t));
+
+        pext->do_init = true;
+        pthread_mutex_init(&pext->lock, NULL);
+        pext->pdtbl     = NULL;
+		pext->ext_probe_eval_fn = ext_eval_fn;
+
+        return(pext);
+}
+#else
 oval_pext_t *oval_pext_new(void)
 {
         oval_pext_t *pext = malloc(sizeof(oval_pext_t));
@@ -65,9 +79,9 @@ oval_pext_t *oval_pext_new(void)
         pext->do_init = true;
         pthread_mutex_init(&pext->lock, NULL);
         pext->pdtbl     = NULL;
-
         return(pext);
 }
+#endif
 
 void oval_pext_free(oval_pext_t *pext)
 {
@@ -948,12 +962,16 @@ int oval_probe_ext_init(oval_pext_t *pext)
         pthread_mutex_lock(&pext->lock);
 
         if (pext->do_init) {
-                pext->pdtbl = oval_pdtbl_new();
+			pext->pdtbl = oval_pdtbl_new();
 
-                if (oval_probe_cmd_init(pext) != 0)
-                        ret = -1;
-                else
-                        pext->do_init = false;
+#ifdef EXTERNAL_PROBE_COLLECT
+			SEAP_CTX_set_external_probe_eval_fn(pext->pdtbl->ctx, pext->ext_probe_eval_fn);
+#endif
+
+			if (oval_probe_cmd_init(pext) != 0)
+				ret = -1;
+			else
+				pext->do_init = false;
         }
         pthread_mutex_unlock(&pext->lock);
 

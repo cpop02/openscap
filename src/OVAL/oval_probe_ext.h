@@ -50,11 +50,19 @@ struct oval_pext {
 
         void *sess_ptr;
         struct oval_syschar_model **model;
+
+#ifdef EXTERNAL_PROBE_COLLECT
+        oval_external_probe_eval_fn ext_probe_eval_fn;
+#endif
 };
 
 typedef struct oval_pext oval_pext_t;
 
+#ifdef EXTERNAL_PROBE_COLLECT
+oval_pext_t *oval_pext_new(oval_external_probe_eval_fn ext_eval_fn);
+#else
 oval_pext_t *oval_pext_new(void);
+#endif
 void oval_pext_free(oval_pext_t *pext);
 int oval_probe_ext_init(oval_pext_t *pext);
 int oval_probe_ext_eval(SEAP_CTX_t *ctx, oval_pd_t *pd, oval_pext_t *pext, struct oval_syschar *syschar, int flags);

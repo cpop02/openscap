@@ -70,5 +70,8 @@ int SEAP_replyerr(SEAP_CTX_t *ctx, int sd, SEAP_msg_t *rep_msg, uint32_t e);
 
 int __SEAP_recvmsg_process_cmd (SEAP_CTX_t *ctx, int sd, SEAP_cmd_t *cmd);
 
+#ifdef EXTERNAL_PROBE_COLLECT
+void SEAP_CTX_set_external_probe_eval_fn(SEAP_CTX_t *ctx, oval_external_probe_eval_fn ext_probe_eval_fn);
+#endif
 
 #endif /* _SEAP_H */

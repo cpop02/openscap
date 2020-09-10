@@ -202,6 +202,10 @@ void *probe_common_main(void *arg)
 	 * Initialize SEAP stuff
 	 */
 	probe.SEAP_ctx = SEAP_CTX_new();
+#ifdef EXTERNAL_PROBE_COLLECT
+	SEAP_CTX_set_external_probe_eval_fn(probe.SEAP_ctx, probe_argument->ext_probe_eval_fn);
+#endif
+
 	probe.sd = SEAP_add_probe(probe.SEAP_ctx, data);
 
 	if (probe.sd < 0)

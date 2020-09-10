@@ -39,8 +39,12 @@ SEAP_desctable_t *SEAP_desctable_new (void)
         return(t);
 }
 
+#ifdef EXTERNAL_PROBE_COLLECT
+int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data, oval_external_probe_eval_fn ext_probe_eval_fn)
+#else
 int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme,
                    void *scheme_data)
+#endif
 {
         bitmap_bitn_t sd;
         pthread_mutexattr_t mutex_attr;
@@ -70,6 +74,10 @@ int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme,
 		sd_dsc->msg_queue = NULL;
 		sd_dsc->err_queue = rbt_i32_new();
 		sd_dsc->cmd_queue = NULL;
+
+#ifdef EXTERNAL_PROBE_COLLECT
+                sd_dsc->ext_probe_eval_fn = ext_probe_eval_fn;
+#endif
 
 		SEAP_packetq_init(&sd_dsc->pck_queue);
 

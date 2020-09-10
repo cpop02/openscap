@@ -30,6 +30,7 @@
 #include "generic/rbt/rbt_common.h"
 #include "generic/bitmap.h"
 #include "oval_types.h"
+#include "oval_external_probe.h"
 
 typedef uint8_t SEAP_cflags_t;
 
@@ -58,6 +59,9 @@ struct SEAP_CTX {
         uint16_t recv_timeout;
         uint16_t send_timeout;
 	oval_subtype_t subtype;
+#ifdef EXTERNAL_PROBE_COLLECT
+        oval_external_probe_eval_fn ext_probe_eval_fn;
+#endif
 };
 typedef struct SEAP_CTX SEAP_CTX_t;
 

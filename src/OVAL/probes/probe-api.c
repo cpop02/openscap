@@ -876,6 +876,7 @@ oval_syschar_collection_flag_t probe_cobj_compute_flag(SEXP_t *cobj)
 	int exists_cnt = 0;
 	int does_not_exist_cnt = 0;
 	int not_collected_cnt = 0;
+	int pending_collect_cnt = 0;
 
 	items = probe_cobj_get_items(cobj);
 	SEXP_list_foreach(item, items) {
@@ -892,6 +893,9 @@ oval_syschar_collection_flag_t probe_cobj_compute_flag(SEXP_t *cobj)
 		case SYSCHAR_STATUS_NOT_COLLECTED:
 			++not_collected_cnt;
 			break;
+		case SYSCHAR_STATUS_PENDING_COLLECT:
+			++pending_collect_cnt;
+			break;
 		default:
 			SEXP_free(item);
 			flag = SYSCHAR_FLAG_ERROR;
@@ -901,6 +905,8 @@ oval_syschar_collection_flag_t probe_cobj_compute_flag(SEXP_t *cobj)
 
 	if (error_cnt > 0) {
 		flag = SYSCHAR_FLAG_ERROR;
+	} else if (pending_collect_cnt > 0) {
+		flag = SYSCHAR_FLAG_PENDING_COLLECT;
 	} else if (not_collected_cnt > 0) {
 		flag = SYSCHAR_FLAG_INCOMPLETE;
 	} else if (exists_cnt > 0) {

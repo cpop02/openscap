@@ -89,7 +89,12 @@ static const struct oval_result_to_xccdf_spec XCCDF_OVAL_RESULTS_MAP[] = {
 	{0, 0, 0}
 };
 
-oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *model, const char * name) {
+#ifdef EXTERNAL_PROBE_COLLECT
+oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name, oval_external_probe_eval_fn ext_probe_eval_fn)
+#else
+oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *model, const char * name) 
+#endif
+{
 	struct oval_sysinfo *sysinfo;
 	struct oval_generator *generator;
 	int ret;
@@ -105,7 +110,11 @@ oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *mode
 	ag_sess->cur_var_model = NULL;
 	ag_sess->sys_model = oval_syschar_model_new(model);
 #if defined(OVAL_PROBES_ENABLED)
+#ifdef EXTERNAL_PROBE_COLLECT
+	ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model, ext_probe_eval_fn);
+#else
 	ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model);
+#endif
 #endif
 
 #if defined(OVAL_PROBES_ENABLED)

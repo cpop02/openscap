@@ -27,180 +27,268 @@
 #include "probe-table.h"
 #include "oval_types.h"
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE
+#if defined(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE)
 #include "independent/environmentvariable_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE)
+#include "external/environmentvariable_probe.h"
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE58
+#if defined(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE58)
 #include "independent/environmentvariable58_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE58)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_FAMILY
+#if defined(OPENSCAP_PROBE_INDEPENDENT_FAMILY)
 #include "independent/family_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_FAMILY)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_FILEHASH
+#if defined(OPENSCAP_PROBE_INDEPENDENT_FILEHASH)
 #include "independent/filehash_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_FILEHASH)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_FILEHASH58
+#if defined(OPENSCAP_PROBE_INDEPENDENT_FILEHASH58)
 #include "independent/filehash58_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_FILEHASH58)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_SQL
+#if defined(OPENSCAP_PROBE_INDEPENDENT_SQL)
 #include "independent/sql_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_SQL)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_SQL57
+#if defined(OPENSCAP_PROBE_INDEPENDENT_SQL57)
 #include "independent/sql57_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_SQL57)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_SYSTEM_INFO
+#if defined(OPENSCAP_PROBE_INDEPENDENT_SYSTEM_INFO)
 #include "independent/system_info_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_SYSTEM_INFO)
+#include "external/system_info_probe.h"
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT
+#if defined(OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT)
 #include "independent/textfilecontent_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_TEXTFILECONTENT)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT54
+#if defined(OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT54)
 #include "independent/textfilecontent54_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_TEXTFILECONTENT54)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_VARIABLE
+#if defined(OPENSCAP_PROBE_INDEPENDENT_VARIABLE)
 #include "independent/variable_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_VARIABLE)
+#include "external/variable_probe.h"
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_XMLFILECONTENT
+#if defined(OPENSCAP_PROBE_INDEPENDENT_XMLFILECONTENT)
 #include "independent/xmlfilecontent_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_XMLFILECONTENT)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_INDEPENDENT_YAMLFILECONTENT
+#if defined(OPENSCAP_PROBE_INDEPENDENT_YAMLFILECONTENT)
 #include "independent/yamlfilecontent_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_YAMLFILECONTENT)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_DPKGINFO
+#if defined(OPENSCAP_PROBE_LINUX_DPKGINFO)
 #include "unix/linux/dpkginfo_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_DPKGINFO)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_IFLISTENERS
+#if defined(OPENSCAP_PROBE_LINUX_IFLISTENERS)
 #include "unix/linux/iflisteners_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_IFLISTENERS)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_INETLISTENINGSERVERS
+#if defined(OPENSCAP_PROBE_LINUX_INETLISTENINGSERVERS)
 #include "unix/linux/inetlisteningservers_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_INETLISTENINGSERVERS)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_PARTITION
+#if defined(OPENSCAP_PROBE_LINUX_PARTITION)
 #include "unix/linux/partition_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_PARTITION)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_RPMINFO
+#if defined(OPENSCAP_PROBE_LINUX_RPMINFO)
 #include "unix/linux/rpminfo_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_RPMINFO)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_RPMVERIFY
+#if defined(OPENSCAP_PROBE_LINUX_RPMVERIFY)
 #include "unix/linux/rpmverify_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_RPMVERIFY)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_RPMVERIFYFILE
+#if defined(OPENSCAP_PROBE_LINUX_RPMVERIFYFILE)
 #include "unix/linux/rpmverifyfile_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_RPMVERIFYFILE)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_RPMVERIFYPACKAGE
+#if defined(OPENSCAP_PROBE_LINUX_RPMVERIFYPACKAGE)
 #include "unix/linux/rpmverifypackage_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_RPMVERIFYPACKAGE)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_SELINUXBOOLEAN
+#if defined(OPENSCAP_PROBE_LINUX_SELINUXBOOLEAN)
 #include "unix/linux/selinuxboolean_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_SELINUXBOOLEAN)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_SELINUXSECURITYCONTEXT
+#if defined(OPENSCAP_PROBE_LINUX_SELINUXSECURITYCONTEXT)
 #include "unix/linux/selinuxsecuritycontext_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_SELINUXSECURITYCONTEXT)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_SYSTEMDUNITDEPENDENCY
+#if defined(OPENSCAP_PROBE_LINUX_SYSTEMDUNITDEPENDENCY)
 #include "unix/linux/systemdunitdependency_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_SYSTEMDUNITDEPENDENCY)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_LINUX_SYSTEMDUNITPROPERTY
+#if defined(OPENSCAP_PROBE_LINUX_SYSTEMDUNITPROPERTY)
 #include "unix/linux/systemdunitproperty_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_SYSTEMDUNITPROPERTY)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_SOLARIS_ISAINFO
+#if defined(OPENSCAP_PROBE_SOLARIS_ISAINFO)
 #include "unix/solaris/isainfo_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_SOLARIS_ISAINFO)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_DNSCACHE
+#if defined(OPENSCAP_PROBE_UNIX_DNSCACHE)
 #include "unix/dnscache_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_DNSCACHE)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_FILE
+#if defined(OPENSCAP_PROBE_UNIX_FILE)
 #include "unix/file_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_FILE)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_FILEEXTENDEDATTRIBUTE
+#if defined(OPENSCAP_PROBE_UNIX_FILEEXTENDEDATTRIBUTE)
 #include "unix/fileextendedattribute_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_FILEEXTENDEDATTRIBUTE)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_GCONF
+#if defined(OPENSCAP_PROBE_UNIX_GCONF)
 #include "unix/gconf_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_GCONF)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_INTERFACE
+#if defined(OPENSCAP_PROBE_UNIX_INTERFACE)
 #include "unix/interface_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_INTERFACE)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_PASSWORD
+#if defined(OPENSCAP_PROBE_UNIX_PASSWORD)
 #include "unix/password_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_PASSWORD)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_PROCESS
+#if defined(OPENSCAP_PROBE_UNIX_PROCESS)
 #include "unix/process_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_PROCESS)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_PROCESS58
+#if defined(OPENSCAP_PROBE_UNIX_PROCESS58)
 #include "unix/process58_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_PROCESS58)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_ROUTINGTABLE
+#if defined(OPENSCAP_PROBE_UNIX_ROUTINGTABLE)
 #include "unix/routingtable_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_ROUTINGTABLE)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_RUNLEVEL
+#if defined(OPENSCAP_PROBE_UNIX_RUNLEVEL)
 #include "unix/runlevel_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_RUNLEVEL)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_SHADOW
+#if defined(OPENSCAP_PROBE_UNIX_SHADOW)
 #include "unix/shadow_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_SHADOW)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_SYMLINK
+#if defined(OPENSCAP_PROBE_UNIX_SYMLINK)
 #include "unix/symlink_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_SYMLINK)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_SYSCTL
+#if defined(OPENSCAP_PROBE_UNIX_SYSCTL)
 #include "unix/sysctl_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_SYSCTL)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_UNAME
+#if defined(OPENSCAP_PROBE_UNIX_UNAME)
 #include "unix/uname_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_UNAME)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_UNIX_XINETD
+#if defined(OPENSCAP_PROBE_UNIX_XINETD)
 #include "unix/xinetd_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_XINETD)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN
+#if defined(OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN)
 #include "windows/accesstoken_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_WINDOWS_ACCESSTOKEN)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_WINDOWS_REGISTRY
+#if defined(OPENSCAP_PROBE_WINDOWS_REGISTRY)
 #include "windows/registry_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_WINDOWS_REGISTRY)
+
 #endif
 
-#ifdef OPENSCAP_PROBE_WINDOWS_WMI57
+#if defined(OPENSCAP_PROBE_WINDOWS_WMI57)
 #include "windows/wmi57_probe.h"
+#elif defined(OPENSCAP_PROBE_EXT_WINDOWS_WMI57)
+
 #endif
 
 typedef struct probe_table_entry {
@@ -213,137 +301,225 @@ typedef struct probe_table_entry {
 
 static const probe_table_entry_t probe_table[] = {
 	/* {type, init, main, fini, offline} */
-#ifdef OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE
+#if defined(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE)
 	{OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE, NULL, environmentvariable_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE)
+	{OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE, NULL, ext_environmentvariable_probe_main, NULL, NULL},
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE58
+#if defined(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE58)
 	{OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE58, NULL, environmentvariable58_probe_main, NULL, environmentvariable58_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE58)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_FAMILY
+#if defined(OPENSCAP_PROBE_INDEPENDENT_FAMILY)
 	{OVAL_INDEPENDENT_FAMILY, NULL, family_probe_main, NULL, family_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_FAMILY)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_FILEHASH
+#if defined(OPENSCAP_PROBE_INDEPENDENT_FILEHASH)
 	{OVAL_INDEPENDENT_FILE_HASH, filehash_probe_init, filehash_probe_main, filehash_probe_fini, filehash_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_FILEHASH)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_FILEHASH58
+#if defined(OPENSCAP_PROBE_INDEPENDENT_FILEHASH58)
 	{OVAL_INDEPENDENT_FILE_HASH58, filehash58_probe_init, filehash58_probe_main, filehash58_probe_fini, filehash58_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_FILEHASH58)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_SQL
+#if defined(OPENSCAP_PROBE_INDEPENDENT_SQL)
 	{OVAL_INDEPENDENT_SQL, NULL, sql_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_SQL)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_SQL57
+#if defined(OPENSCAP_PROBE_INDEPENDENT_SQL57)
 	{OVAL_INDEPENDENT_SQL57, NULL, sql57_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_SQL57)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_SYSTEM_INFO
+#if defined(OPENSCAP_PROBE_INDEPENDENT_SYSTEM_INFO)
 	{OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, NULL, system_info_probe_main, NULL, system_info_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_SYSTEM_INFO)
+	{OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, NULL, ext_system_info_probe_main, NULL, NULL},
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT
+#if defined(OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT)
 	{OVAL_INDEPENDENT_TEXT_FILE_CONTENT, NULL, textfilecontent_probe_main, NULL, textfilecontent_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_TEXTFILECONTENT)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT54
+#if defined(OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT54)
 	{OVAL_INDEPENDENT_TEXT_FILE_CONTENT_54, NULL, textfilecontent54_probe_main, NULL, textfilecontent54_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_TEXTFILECONTENT54)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_VARIABLE
+#if defined(OPENSCAP_PROBE_INDEPENDENT_VARIABLE)
 	{OVAL_INDEPENDENT_VARIABLE, NULL, variable_probe_main, NULL, variable_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_VARIABLE)
+	{OVAL_INDEPENDENT_VARIABLE, NULL, ext_variable_probe_main, NULL, NULL},
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_XMLFILECONTENT
+#if defined(OPENSCAP_PROBE_INDEPENDENT_XMLFILECONTENT)
 	{OVAL_INDEPENDENT_XML_FILE_CONTENT, xmlfilecontent_probe_init, xmlfilecontent_probe_main, xmlfilecontent_probe_fini, xmlfilecontent_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_XMLFILECONTENT)
+
 #endif
-#ifdef OPENSCAP_PROBE_INDEPENDENT_YAMLFILECONTENT
+#if defined(OPENSCAP_PROBE_INDEPENDENT_YAMLFILECONTENT)
 	{OVAL_INDEPENDENT_YAML_FILE_CONTENT, NULL, yamlfilecontent_probe_main, NULL, yamlfilecontent_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_INDEPENDENT_YAMLFILECONTENT)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_DPKGINFO
+#if defined(OPENSCAP_PROBE_LINUX_DPKGINFO)
 	{OVAL_LINUX_DPKG_INFO, dpkginfo_probe_init, dpkginfo_probe_main, dpkginfo_probe_fini, dpkginfo_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_DPKGINFO)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_IFLISTENERS
+#if defined(OPENSCAP_PROBE_LINUX_IFLISTENERS)
 	{OVAL_LINUX_IFLISTENERS, NULL, iflisteners_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_IFLISTENERS)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_INETLISTENINGSERVERS
+#if defined(OPENSCAP_PROBE_LINUX_INETLISTENINGSERVERS)
 	{OVAL_LINUX_INET_LISTENING_SERVERS, NULL, inetlisteningservers_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_INETLISTENINGSERVERS)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_PARTITION
+#if defined(OPENSCAP_PROBE_LINUX_PARTITION)
 	{OVAL_LINUX_PARTITION, NULL, partition_probe_main, NULL, patition_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_PARTITION)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_RPMINFO
+#if defined(OPENSCAP_PROBE_LINUX_RPMINFO)
 	{OVAL_LINUX_RPM_INFO, rpminfo_probe_init, rpminfo_probe_main, rpminfo_probe_fini, rpminfo_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_RPMINFO)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_RPMVERIFY
+#if defined(OPENSCAP_PROBE_LINUX_RPMVERIFY)
 	{OVAL_LINUX_RPMVERIFY, rpmverify_probe_init, rpmverify_probe_main, rpmverify_probe_fini, rpmverify_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_RPMVERIFY)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_RPMVERIFYFILE
+#if defined(OPENSCAP_PROBE_LINUX_RPMVERIFYFILE)
 	{OVAL_LINUX_RPMVERIFYFILE, rpmverifyfile_probe_init, rpmverifyfile_probe_main, rpmverifyfile_probe_fini, rpmverifyfile_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_RPMVERIFYFILE)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_RPMVERIFYPACKAGE
+#if defined(OPENSCAP_PROBE_LINUX_RPMVERIFYPACKAGE)
 	{OVAL_LINUX_RPMVERIFYPACKAGE, rpmverifypackage_probe_init, rpmverifypackage_probe_main, rpmverifypackage_probe_fini, rpmverifypackage_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_RPMVERIFYPACKAGE)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_SELINUXBOOLEAN
+#if defined(OPENSCAP_PROBE_LINUX_SELINUXBOOLEAN)
 	{OVAL_LINUX_SELINUXBOOLEAN, NULL, selinuxboolean_probe_main, NULL, selinuxboolean_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_SELINUXBOOLEAN)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_SELINUXSECURITYCONTEXT
+#if defined(OPENSCAP_PROBE_LINUX_SELINUXSECURITYCONTEXT)
 	{OVAL_LINUX_SELINUXSECURITYCONTEXT, NULL, selinuxsecuritycontext_probe_main, NULL, selinuxsecuritycontext_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_SELINUXSECURITYCONTEXT)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_SYSTEMDUNITDEPENDENCY
+#if defined(OPENSCAP_PROBE_LINUX_SYSTEMDUNITDEPENDENCY)
 	{OVAL_LINUX_SYSTEMDUNITDEPENDENCY, NULL, systemdunitdependency_probe_main, NULL, systemdunitdependency_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_SYSTEMDUNITDEPENDENCY)
+
 #endif
-#ifdef OPENSCAP_PROBE_LINUX_SYSTEMDUNITPROPERTY
+#if defined(OPENSCAP_PROBE_LINUX_SYSTEMDUNITPROPERTY)
 	{OVAL_LINUX_SYSTEMDUNITPROPERTY, NULL, systemdunitproperty_probe_main, NULL, systemdunitproperty_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_LINUX_SYSTEMDUNITPROPERTY)
+
 #endif
-#ifdef OPENSCAP_PROBE_SOLARIS_ISAINFO
+#if defined(OPENSCAP_PROBE_SOLARIS_ISAINFO)
 	{OVAL_SOLARIS_ISAINFO, NULL, isainfo_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_SOLARIS_ISAINFO)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_DNSCACHE
+#if defined(OPENSCAP_PROBE_UNIX_DNSCACHE)
 	{OVAL_UNIX_DNSCACHE, NULL, dnscache_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_DNSCACHE)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_FILE
+#if defined(OPENSCAP_PROBE_UNIX_FILE)
 	{OVAL_UNIX_FILE, file_probe_init, file_probe_main, file_probe_fini, file_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_FILE)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_FILEEXTENDEDATTRIBUTE
+#if defined(OPENSCAP_PROBE_UNIX_FILEEXTENDEDATTRIBUTE)
 	{OVAL_UNIX_FILEEXTENDEDATTRIBUTE, fileextendedattribute_probe_init, fileextendedattribute_probe_main, fileextendedattribute_probe_fini, fileextendedattribute_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_FILEEXTENDEDATTRIBUTE)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_GCONF
+#if defined(OPENSCAP_PROBE_UNIX_GCONF)
 	{OVAL_UNIX_GCONF, NULL, gconf_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_GCONF)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_INTERFACE
+#if defined(OPENSCAP_PROBE_UNIX_INTERFACE)
 	{OVAL_UNIX_INTERFACE, NULL, interface_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_INTERFACE)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_PASSWORD
+#if defined(OPENSCAP_PROBE_UNIX_PASSWORD)
 	{OVAL_UNIX_PASSWORD, NULL, password_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_PASSWORD)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_PROCESS
+#if defined(OPENSCAP_PROBE_UNIX_PROCESS)
 	{OVAL_UNIX_PROCESS, NULL, process_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_PROCESS)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_PROCESS58
+#if defined(OPENSCAP_PROBE_UNIX_PROCESS58)
 	{OVAL_UNIX_PROCESS58, NULL, process58_probe_main, NULL, process58_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_PROCESS58)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_ROUTINGTABLE
+#if defined(OPENSCAP_PROBE_UNIX_ROUTINGTABLE)
 	{OVAL_UNIX_ROUTINGTABLE, NULL, routingtable_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_ROUTINGTABLE)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_RUNLEVEL
+#if defined(OPENSCAP_PROBE_UNIX_RUNLEVEL)
 	{OVAL_UNIX_RUNLEVEL, NULL, runlevel_probe_main, NULL, runlevel_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_RUNLEVEL)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_SHADOW
+#if defined(OPENSCAP_PROBE_UNIX_SHADOW)
 	{OVAL_UNIX_SHADOW, NULL, shadow_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_SHADOW)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_SYMLINK
+#if defined(OPENSCAP_PROBE_UNIX_SYMLINK)
 	{OVAL_UNIX_SYMLINK, NULL, symlink_probe_main, NULL, symlink_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_SYMLINK)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_SYSCTL
+#if defined(OPENSCAP_PROBE_UNIX_SYSCTL)
 	{OVAL_UNIX_SYSCTL, NULL, sysctl_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_SYSCTL)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_UNAME
+#if defined(OPENSCAP_PROBE_UNIX_UNAME)
 	{OVAL_UNIX_UNAME, NULL, uname_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_UNAME)
+
 #endif
-#ifdef OPENSCAP_PROBE_UNIX_XINETD
+#if defined(OPENSCAP_PROBE_UNIX_XINETD)
 	{OVAL_UNIX_XINETD, xinetd_probe_init, xinetd_probe_main, xinetd_probe_fini, xinetd_probe_offline_mode_supported},
+#elif defined(OPENSCAP_PROBE_EXT_UNIX_XINETD)
+
 #endif
-#ifdef OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN
+#if defined(OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN)
 	{OVAL_WINDOWS_ACCESS_TOKEN, NULL, accesstoken_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_WINDOWS_ACCESSTOKEN)
+
 #endif
-#ifdef OPENSCAP_PROBE_WINDOWS_REGISTRY
+#if defined(OPENSCAP_PROBE_WINDOWS_REGISTRY)
 	{OVAL_WINDOWS_REGISTRY, NULL, registry_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_WINDOWS_REGISTRY)
+
 #endif
-#ifdef OPENSCAP_PROBE_WINDOWS_WMI57
+#if defined(OPENSCAP_PROBE_WINDOWS_WMI57)
 	{OVAL_WINDOWS_WMI_57, NULL, wmi57_probe_main, NULL, NULL},
+#elif defined(OPENSCAP_PROBE_EXT_WINDOWS_WMI57)
+
 #endif
 	{OVAL_SUBTYPE_UNKNOWN, NULL, NULL, NULL, NULL}
 };

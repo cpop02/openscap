@@ -432,6 +432,9 @@ static inline oval_result_t _evaluate_sysent_with_variable(struct oval_syschar_m
 		oval_check_t var_check = oval_state_content_get_var_check(content);
 		ent_val_res = ores_get_result_bychk(&var_ores, var_check);
 		} break;
+	case SYSCHAR_FLAG_PENDING_COLLECT:
+		ent_val_res = OVAL_RESULT_PENDING_COLLECT;
+		break;
 	case SYSCHAR_FLAG_ERROR:
 	case SYSCHAR_FLAG_DOES_NOT_EXIST:
 	case SYSCHAR_FLAG_NOT_COLLECTED:

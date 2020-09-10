@@ -30,6 +30,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #if defined(OS_FREEBSD)
 #include <pthread_np.h>
@@ -50,7 +51,7 @@ static volatile uint32_t next_ID = 0;
 pthread_mutex_t next_ID_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-static void probe_icache_item_setID(SEXP_t *item, SEXP_ID_t item_ID)
+static void probe_icache_item_setID(SEXP_t *item)
 {
         SEXP_t  *name_ref, *prev_id;
         SEXP_t   uniq_id;
@@ -133,7 +134,7 @@ static int icache_lookup(rbt_t *tree, int64_t item_id, probe_iqpair_t *pair) {
 		cached->item[cached->count - 1] = pair->p.item;
 
 		/* Assign an unique item ID */
-		probe_icache_item_setID(pair->p.item, item_id);
+		probe_icache_item_setID(pair->p.item);
 	} else {
 		/*
 		* Cache HIT
@@ -153,7 +154,7 @@ static void icache_add_to_tree(rbt_t *tree, int64_t item_id, probe_iqpair_t *pai
 	cached->count = 1;
 
 	/* Assign an unique item ID */
-	probe_icache_item_setID(pair->p.item, item_id);
+	probe_icache_item_setID(pair->p.item);
 
 	if (rbt_i64_add(tree, (int64_t)item_id, (void **)cached, NULL) != 0) {
 		dE("Can't add item (k=%"PRIi64" to the cache (%p)", item_id, tree);

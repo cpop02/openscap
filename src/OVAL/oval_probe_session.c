@@ -117,38 +117,51 @@ static void __init_once(void)
         return;
 }
 
-static void oval_probe_session_init(oval_probe_session_t *sess, struct oval_syschar_model *model)
-{
-        sess->ph = oval_phtbl_new();
-        sess->sys_model = model;
-        sess->flg = 0;
-        sess->pext = oval_pext_new();
-        sess->pext->model    = &sess->sys_model;
-        sess->pext->sess_ptr = sess;
+static void oval_probe_session_init_keep_ext_probe_eval_fn(oval_probe_session_t* sess, struct oval_syschar_model* model) {
+    sess->ph = oval_phtbl_new();
+    sess->sys_model = model;
+    sess->flg = 0;
+#ifdef EXTERNAL_PROBE_COLLECT
+    sess->pext = oval_pext_new(sess->ext_probe_eval_fn);
+#else
+    sess->pext = oval_pext_new();
+#endif
+    sess->pext->model = &sess->sys_model;
+    sess->pext->sess_ptr = sess;
 
-        __init_once();
+    __init_once();
 
-	oval_probe_handler_t *probe_handler;
-	int probe_count = probe_table_size();
-	for (int i = 0; i < probe_count; i++) {
-		oval_subtype_t type = probe_table_at_index(i);
-		if (type == OVAL_INDEPENDENT_SYSCHAR_SUBTYPE) {
-			probe_handler = &oval_probe_sys_handler;
-		} else {
-			probe_handler = &oval_probe_ext_handler;
-		}
-		oval_probe_handler_set(sess->ph, type, probe_handler, sess->pext);
-	}
+    oval_probe_handler_t* probe_handler;
+    int probe_count = probe_table_size();
+    for (int i = 0; i < probe_count; i++) {
+        oval_subtype_t type = probe_table_at_index(i);
+        if (type == OVAL_INDEPENDENT_SYSCHAR_SUBTYPE) {
+            probe_handler = &oval_probe_sys_handler;
+        } else {
+            probe_handler = &oval_probe_ext_handler;
+        }
+        oval_probe_handler_set(sess->ph, type, probe_handler, sess->pext);
+    }
 
-        oval_probe_handler_set(sess->ph, OVAL_SUBTYPE_ALL, oval_probe_ext_handler, sess->pext); /* special case for reset */
+    oval_probe_handler_set(sess->ph, OVAL_SUBTYPE_ALL, oval_probe_ext_handler, sess->pext); /* special case for reset */
 }
 
+#ifdef EXTERNAL_PROBE_COLLECT
+oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_fn ext_probe_eval_fn)
+{
+        oval_probe_session_t *sess = malloc(sizeof(oval_probe_session_t));
+		sess->ext_probe_eval_fn = ext_probe_eval_fn;	// this must be set before init, which expects it to be valid
+		oval_probe_session_init_keep_ext_probe_eval_fn(sess, model);
+		return sess;
+}
+#else
 oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model)
 {
         oval_probe_session_t *sess = malloc(sizeof(oval_probe_session_t));
-        oval_probe_session_init(sess, model);
+        oval_probe_session_init_without_ext_probe_eval_fn(sess, model);
         return sess;
 }
+#endif
 
 static void oval_probe_session_free(oval_probe_session_t *sess)
 {
@@ -164,8 +177,7 @@ static void oval_probe_session_free(oval_probe_session_t *sess)
 void oval_probe_session_reinit(oval_probe_session_t *sess, struct oval_syschar_model *model)
 {
 	oval_probe_session_free(sess);
-
-	oval_probe_session_init(sess, model);
+    oval_probe_session_init_keep_ext_probe_eval_fn(sess, model);
 }
 
 void oval_probe_session_destroy(oval_probe_session_t *sess)

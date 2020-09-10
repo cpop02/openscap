@@ -456,7 +456,7 @@ static int get_runlevel (struct runlevel_req *req, struct runlevel_rep **rep)
         _A(rep != NULL);
         return GET_RUNLEVEL(LINUX_DISTRO, req, rep);
 }
-#elif defined(OS_FREEBSD)
+#elif defined(OS_FREEBSD) || defined(OS_OSX)
 static int get_runlevel (struct runlevel_req *req, struct runlevel_rep **rep)
 {
         _A(req != NULL);
