@@ -20,6 +20,7 @@ set (OVAL_SOURCES
     "oval_entity.c"
     "oval_enumerations.c"
     "oval_external_probe_result.c"
+    "oval_external_probe_value.c"
     "oval_filter.c"
     "oval_generator.c"
     "oval_glob_to_regex.c"

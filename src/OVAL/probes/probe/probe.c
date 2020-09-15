@@ -37,3 +37,9 @@ SEXP_t *probe_ctx_getresult(probe_ctx *ctx)
 {
         return (ctx->probe_out);
 }
+
+#ifdef EXTERNAL_PROBE_COLLECT
+oval_external_probe_eval_fn_registration_t *probe_get_external_probe_eval(probe_ctx *ctx) {
+        return &(ctx->ext_probe_eval);
+}
+#endif

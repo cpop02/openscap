@@ -40,7 +40,7 @@ SEAP_desctable_t *SEAP_desctable_new (void)
 }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data, oval_external_probe_eval_fn ext_probe_eval_fn)
+int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data, oval_external_probe_eval_fn_registration_t *ext_probe_eval)
 #else
 int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme,
                    void *scheme_data)
@@ -76,7 +76,7 @@ int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme,
 		sd_dsc->cmd_queue = NULL;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-                sd_dsc->ext_probe_eval_fn = ext_probe_eval_fn;
+                sd_dsc->ext_probe_eval = *ext_probe_eval;
 #endif
 
 		SEAP_packetq_init(&sd_dsc->pck_queue);

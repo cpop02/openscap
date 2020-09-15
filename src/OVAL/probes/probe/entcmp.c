@@ -27,6 +27,8 @@
  *      Tomas Heinrich <theinric@redhat.com>
  */
 
+#include "oval_system_characteristics.h"
+#include "oval_types.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -400,6 +402,8 @@ oval_result_t probe_entste_cmp(SEXP_t * ent_ste, SEXP_t * ent_itm)
 	case SYSCHAR_STATUS_ERROR:
 	case SYSCHAR_STATUS_NOT_COLLECTED:
 		return OVAL_RESULT_ERROR;
+	case SYSCHAR_STATUS_PENDING_COLLECT:
+		return OVAL_RESULT_PENDING_COLLECT;
 	default:
 		break;
 	}
@@ -448,7 +452,7 @@ oval_result_t probe_entobj_cmp(SEXP_t * ent_obj, SEXP_t * val)
 }
 
 struct _oresults {
-	int true_cnt, false_cnt, unknown_cnt, error_cnt, noteval_cnt, notappl_cnt;
+	int true_cnt, false_cnt, unknown_cnt, error_cnt, noteval_cnt, notappl_cnt, pending_collect_cnt;
 };
 
 static int results_parser(SEXP_t * res_lst, struct _oresults *ores)
@@ -479,6 +483,9 @@ static int results_parser(SEXP_t * res_lst, struct _oresults *ores)
 		case OVAL_RESULT_NOT_APPLICABLE:
 			++(ores->notappl_cnt);
 			break;
+		case OVAL_RESULT_PENDING_COLLECT:
+			++(ores->pending_collect_cnt);
+			break;
 		default:
 			return -1;
 		}
@@ -500,6 +507,9 @@ oval_result_t probe_ent_result_bychk(SEXP_t * res_lst, oval_check_t check)
 		return OVAL_RESULT_ERROR;
 	}
 
+	if (ores.pending_collect_cnt > 0)
+		return OVAL_RESULT_PENDING_COLLECT;
+		
 	if (ores.notappl_cnt > 0 &&
 	    ores.noteval_cnt == 0 &&
 	    ores.false_cnt == 0 && ores.error_cnt == 0 && ores.unknown_cnt == 0 && ores.true_cnt == 0)

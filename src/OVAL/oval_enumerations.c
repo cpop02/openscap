@@ -27,6 +27,7 @@
  *      "David Niemoller" <David.Niemoller@g2-inc.com>
  */
 
+#include "oval_types.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -746,6 +747,7 @@ static const struct oscap_string_map OVAL_RESULT_MAP[] = {
 	{OVAL_RESULT_ERROR, "error"},
 	{OVAL_RESULT_NOT_EVALUATED, "not evaluated"},
 	{OVAL_RESULT_NOT_APPLICABLE, "not applicable"},
+	{OVAL_RESULT_PENDING_COLLECT, "pending collect"},
 	{OVAL_ENUMERATION_INVALID, NULL}
 };
 

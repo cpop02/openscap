@@ -122,7 +122,7 @@ static void oval_probe_session_init_keep_ext_probe_eval_fn(oval_probe_session_t*
     sess->sys_model = model;
     sess->flg = 0;
 #ifdef EXTERNAL_PROBE_COLLECT
-    sess->pext = oval_pext_new(sess->ext_probe_eval_fn);
+    sess->pext = oval_pext_new(&sess->ext_probe_eval);
 #else
     sess->pext = oval_pext_new();
 #endif
@@ -147,12 +147,12 @@ static void oval_probe_session_init_keep_ext_probe_eval_fn(oval_probe_session_t*
 }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_fn ext_probe_eval_fn)
+oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_fn_registration_t *ext_probe_eval)
 {
         oval_probe_session_t *sess = malloc(sizeof(oval_probe_session_t));
-		sess->ext_probe_eval_fn = ext_probe_eval_fn;	// this must be set before init, which expects it to be valid
-		oval_probe_session_init_keep_ext_probe_eval_fn(sess, model);
-		return sess;
+	sess->ext_probe_eval = *ext_probe_eval;	// this must be set before init, which expects it to be valid
+	oval_probe_session_init_keep_ext_probe_eval_fn(sess, model);
+	return sess;
 }
 #else
 oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model)

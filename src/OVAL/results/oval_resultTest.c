@@ -29,6 +29,7 @@
  *      Šimon Lukašík
  */
 
+#include "oval_system_characteristics.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -177,6 +178,9 @@ int ores_add_res(struct oresults *ores, oval_result_t res)
 		case OVAL_RESULT_NOT_APPLICABLE:
 			ores->notappl_cnt++;
 			break;
+		case OVAL_RESULT_PENDING_COLLECT:
+			ores->pending_collect_cnt++;
+			break;
 		default:
 			oscap_seterr(OSCAP_EFAMILY_OSCAP, "Invalid oval result type: %d.", res);
 			return 1;
@@ -199,8 +203,12 @@ oval_result_t ores_get_result_bychk(struct oresults *ores, oval_check_t check)
 	    ores->error_cnt == 0 &&
 	    ores->unknown_cnt == 0 &&
 	    ores->notappl_cnt == 0 &&
-	    ores->noteval_cnt == 0)
+	    ores->noteval_cnt == 0 &&
+		ores->pending_collect_cnt == 0)
 		return OVAL_RESULT_UNKNOWN;
+
+	if (ores->pending_collect_cnt > 0)
+		return OVAL_RESULT_PENDING_COLLECT;
 
 	if (ores->notappl_cnt > 0 &&
 	    ores->noteval_cnt == 0 &&
@@ -730,8 +738,12 @@ static oval_result_t eval_check_state(struct oval_test *test, void **args)
 		item_status = oval_sysitem_get_status(item);
 		switch (item_status) {
 		case SYSCHAR_STATUS_ERROR:
-		case SYSCHAR_STATUS_NOT_COLLECTED:
 			item_res = OVAL_RESULT_ERROR;
+			ores_add_res(&item_ores, item_res);
+			oval_result_item_set_result(ritem, item_res);
+			continue;
+		case SYSCHAR_STATUS_PENDING_COLLECT:
+			item_res = OVAL_RESULT_PENDING_COLLECT;
 			ores_add_res(&item_ores, item_res);
 			oval_result_item_set_result(ritem, item_res);
 			continue;

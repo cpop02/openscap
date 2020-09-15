@@ -84,7 +84,7 @@ struct probe_ctx {
 	probe_icache_t *icache;    /**< item cache */
 	int offline_mode;
 #ifdef EXTERNAL_PROBE_COLLECT
-	oval_external_probe_eval_fn ext_probe_eval_fn;
+	oval_external_probe_eval_fn_registration_t ext_probe_eval;
 #endif
 };
 

@@ -86,7 +86,7 @@ struct oval_session {
 	download_progress_calllback_t progress;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-    oval_external_probe_eval_fn ext_probe_eval_fn;
+    oval_external_probe_eval_fn_registration_t ext_probe_eval;
 #endif
 };
 
@@ -327,7 +327,7 @@ static int oval_session_setup_agent(struct oval_session *session)
 
 	char *base_name = oscap_basename(path_clone);
 #ifdef EXTERNAL_PROBE_COLLECT
-	session->sess = oval_agent_new_session(session->def_model, base_name, session->ext_probe_eval_fn);
+	session->sess = oval_agent_new_session(session->def_model, base_name, &session->ext_probe_eval);
 #else
 	session->sess = oval_agent_new_session(session->def_model, base_name);
 #endif
@@ -468,10 +468,11 @@ void oval_session_set_remote_resources(struct oval_session *session, bool allowe
 }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-void oval_session_set_external_probe_eval_fn(struct oval_session *session, oval_external_probe_eval_fn ext_probe_eval_fn)
+void oval_session_set_external_probe_eval(struct oval_session *session, oval_external_probe_eval_fn_registration_t* ext_probe_eval)
 {
 	__attribute__nonnull__(session);
-	session->ext_probe_eval_fn = ext_probe_eval_fn;
+	__attribute__nonnull__(ext_probe_eval);
+	session->ext_probe_eval = *ext_probe_eval;
 }
 #endif
 

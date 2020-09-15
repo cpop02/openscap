@@ -83,6 +83,7 @@ struct oresults {
 	int error_cnt;
 	int noteval_cnt;
 	int notappl_cnt;
+	int pending_collect_cnt;
 };
 
 int ores_add_res(struct oresults *ores, oval_result_t res);

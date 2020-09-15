@@ -1060,7 +1060,7 @@ SEXP_t *probe_worker(probe_t *probe, SEAP_msg_t *msg_in, int *ret)
 
 		pctx.offline_mode = probe->selected_offline_mode;
 #ifdef EXTERNAL_PROBE_COLLECT
-		pctx.ext_probe_eval_fn = probe->SEAP_ctx->ext_probe_eval_fn;
+		pctx.ext_probe_eval = probe->SEAP_ctx->ext_probe_eval;
 #endif
 
 		/* simple object */

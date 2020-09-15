@@ -55,7 +55,7 @@ int sch_queue_connect(SEAP_desc_t *desc)
 	arg->subtype = desc->subtype;
 	arg->queuedata = data;
 #ifdef EXTERNAL_PROBE_COLLECT
-	arg->ext_probe_eval_fn = desc->ext_probe_eval_fn;
+	arg->ext_probe_eval = desc->ext_probe_eval;
 #endif
 	desc->arg = arg;
 

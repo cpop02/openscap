@@ -52,14 +52,14 @@ struct oval_pext {
         struct oval_syschar_model **model;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-        oval_external_probe_eval_fn ext_probe_eval_fn;
+        oval_external_probe_eval_fn_registration_t ext_probe_eval;
 #endif
 };
 
 typedef struct oval_pext oval_pext_t;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-oval_pext_t *oval_pext_new(oval_external_probe_eval_fn ext_eval_fn);
+oval_pext_t *oval_pext_new(oval_external_probe_eval_fn_registration_t *ext_probe_eval);
 #else
 oval_pext_t *oval_pext_new(void);
 #endif

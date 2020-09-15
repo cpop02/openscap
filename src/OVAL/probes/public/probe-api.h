@@ -63,6 +63,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <oval_definitions.h>
+#include <oval_external_probe.h>
 #include <oval_system_characteristics.h>
 #include <oval_results.h>
 #include <oval_types.h>
@@ -467,6 +468,13 @@ OSCAP_API SEXP_t *probe_ctx_getobject(probe_ctx *ctx);
  * probe_ctx_getobject above).
  */
 OSCAP_API SEXP_t *probe_ctx_getresult(probe_ctx *ctx);
+
+#ifdef EXTERNAL_PROBE_COLLECT
+/**
+ * Return the external probe evaluation function (if any).
+ */
+OSCAP_API oval_external_probe_eval_fn_registration_t *probe_get_external_probe_eval(probe_ctx *ctx);
+#endif
 
 typedef struct {
         oval_datatype_t type;

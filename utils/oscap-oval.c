@@ -24,6 +24,7 @@
 #include "oval_definitions.h"
 #include "oval_external_probe.h"
 #include "oval_types.h"
+#include "probe-api.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -178,25 +179,50 @@ static int app_oval_callback(const struct oval_result_definition* res_def, void*
 #if defined(OVAL_PROBES_ENABLED)
 
 #ifdef EXTERNAL_PROBE_COLLECT
-static oval_external_probe_result_t* external_probe_eval_fn(char* id,
-                                                            oval_family_t family,
+static oval_external_probe_result_t* external_probe_eval_fn(void* ctx,
+                                                            char* id,
                                                             oval_subtype_t probe_type,
-                                                            struct oval_record_field_iterator* fields) {
+                                                            oval_external_probe_value_map_t* fields) {
     oval_external_probe_result_t* res = oval_external_probe_result_new(id);
-    int i;
 
-    printf("SORIN: external_probe_eval_fn(%s, %s, %s)\n", id, oval_family_get_text(family), oval_subtype_to_str(probe_type));
+    printf("SORIN: external_probe_eval_fn(%p, %s, %s)\n", ctx, id, oval_subtype_to_str(probe_type));
 
-    for (i = 0; oval_record_field_iterator_has_more(fields); i++) {
-        struct oval_record_field* field = oval_record_field_iterator_next(fields);
-        oval_datatype_t type = oval_record_field_get_datatype(field);
+    if (fields != NULL) {
+        const char* name;
+        oval_external_probe_value_t* value;
+        int i = 0;
 
-        printf("    SORIN: external_probe_eval_fn: [%d] field=%s type=%s value=%s\n", i, oval_record_field_get_name(field),
-               oval_datatype_get_text(type), oval_record_field_get_value(field));
+        OVAL_EXTERNAL_PROBE_VALUE_MAP_FOREACH(fields, name, value, {
+            oval_datatype_t type = oval_external_probe_value_get_datatype(value);
+
+            char val_str[16384];
+            switch (type) {
+                case OVAL_DATATYPE_STRING:
+                    snprintf(val_str, 16384, "%s", oval_external_probe_value_get_string(value));
+                    val_str[16383] = 0;
+                    break;
+                case OVAL_DATATYPE_BOOLEAN:
+                    sprintf(val_str, "%s", oval_external_probe_value_get_boolean(value) ? "true" : "false");
+                    break;
+                case OVAL_DATATYPE_INTEGER:
+                    sprintf(val_str, "%lld", oval_external_probe_value_get_integer(value));
+                    break;
+                case OVAL_DATATYPE_FLOAT:
+                    sprintf(val_str, "%f", oval_external_probe_value_get_float(value));
+                    break;
+                default:
+                    sprintf(val_str, "UNKNOWN");
+            }
+
+            printf("    SORIN: external_probe_eval_fn: [%d] field=%s type=%s value=%s\n", i++, name, oval_datatype_get_text(type), val_str);
+        })
     }
 
-    // TODO actually fetch the probe result from some in-memory store
-    oval_external_probe_result_set_eval_result(res, OVAL_RESULT_ERROR);
+    oval_external_probe_value_map_t *vars = oval_external_probe_value_map_new("PATH", oval_external_probe_value_new_string("/some/folder"),
+        "CLOUD", oval_external_probe_value_new_string("dodo-red"), NULL);
+    
+    oval_external_probe_result_set_fields(res, vars);
+    oval_external_probe_result_set_status(res, 0);
 
     return res;
 }
@@ -252,7 +278,8 @@ int app_collect_oval(const struct oscap_action* action) {
 
     /* create probe session */
 #ifdef EXTERNAL_PROBE_COLLECT
-    pb_sess = oval_probe_session_new(sys_model, external_probe_eval_fn);
+    oval_external_probe_eval_fn_registration_t eval = {external_probe_eval_fn, (void*)0x666};
+    pb_sess = oval_probe_session_new(sys_model, &eval);
 #else
     pb_sess = oval_probe_session_new(sys_model);
 #endif
@@ -340,7 +367,8 @@ int app_evaluate_oval(const struct oscap_action* action) {
     }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-    oval_session_set_external_probe_eval_fn(session, external_probe_eval_fn);
+    oval_external_probe_eval_fn_registration_t eval = {external_probe_eval_fn, (void*)0x666};
+    oval_session_set_external_probe_eval(session, &eval);
 #endif
 
     /* set validation level */

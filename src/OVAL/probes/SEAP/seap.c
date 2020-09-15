@@ -65,7 +65,8 @@ static void SEAP_CTX_initdefault (SEAP_CTX_t *ctx)
         ctx->cflags       = 0;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-        ctx->ext_probe_eval_fn = NULL;
+        ctx->ext_probe_eval.ext_probe_eval = NULL;
+        ctx->ext_probe_eval.ext_probe_eval_ctx = NULL;
 #endif
 
         return;
@@ -102,7 +103,7 @@ int SEAP_connect(SEAP_CTX_t *ctx)
         int sd;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-	sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL, ctx->ext_probe_eval_fn);
+	sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL, &ctx->ext_probe_eval);
 #else
 	sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL);
 #endif
@@ -148,7 +149,7 @@ int SEAP_openfd2 (SEAP_CTX_t *ctx, int ifd, int ofd, uint32_t flags)
         int sd;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-        sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL, ctx->ext_probe_eval_fn);
+        sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL, &ctx->ext_probe_eval);
 #else
         sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, NULL);
 #endif
@@ -171,7 +172,7 @@ int SEAP_openfd2 (SEAP_CTX_t *ctx, int ifd, int ofd, uint32_t flags)
 int SEAP_add_probe (SEAP_CTX_t *ctx, sch_queuedata_t *data)
 {
 #ifdef EXTERNAL_PROBE_COLLECT
-	int sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, data, ctx->ext_probe_eval_fn);
+	int sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, data, &ctx->ext_probe_eval);
 #else
 	int sd = SEAP_desc_add(ctx->sd_table, SCH_QUEUE, data);
 #endif
@@ -327,9 +328,10 @@ int __SEAP_recvmsg_process_cmd (SEAP_CTX_t *ctx, int sd, SEAP_cmd_t *cmd)
 }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-void SEAP_CTX_set_external_probe_eval_fn(SEAP_CTX_t *ctx, oval_external_probe_eval_fn ext_probe_eval_fn) {
+void SEAP_CTX_set_external_probe_eval_fn(SEAP_CTX_t *ctx, oval_external_probe_eval_fn_registration_t *ext_probe_eval) {
         _A(ctx != NULL);
-        ctx->ext_probe_eval_fn = ext_probe_eval_fn;
+        _A(ext_probe_eval != NULL);
+        ctx->ext_probe_eval = *ext_probe_eval;
 }
 #endif
 

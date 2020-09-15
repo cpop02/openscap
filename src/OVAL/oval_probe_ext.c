@@ -60,14 +60,14 @@ static oval_pd_t    *oval_pdtbl_get(oval_pdtbl_t *table, oval_subtype_t type);
  * oval_pext_
  */
 #ifdef EXTERNAL_PROBE_COLLECT
-oval_pext_t *oval_pext_new(oval_external_probe_eval_fn ext_eval_fn)
+oval_pext_t *oval_pext_new(oval_external_probe_eval_fn_registration_t *ext_probe_eval)
 {
         oval_pext_t *pext = malloc(sizeof(oval_pext_t));
 
         pext->do_init = true;
         pthread_mutex_init(&pext->lock, NULL);
         pext->pdtbl     = NULL;
-		pext->ext_probe_eval_fn = ext_eval_fn;
+		pext->ext_probe_eval = *ext_probe_eval;
 
         return(pext);
 }
@@ -965,7 +965,7 @@ int oval_probe_ext_init(oval_pext_t *pext)
 			pext->pdtbl = oval_pdtbl_new();
 
 #ifdef EXTERNAL_PROBE_COLLECT
-			SEAP_CTX_set_external_probe_eval_fn(pext->pdtbl->ctx, pext->ext_probe_eval_fn);
+			SEAP_CTX_set_external_probe_eval_fn(pext->pdtbl->ctx, &pext->ext_probe_eval);
 #endif
 
 			if (oval_probe_cmd_init(pext) != 0)
