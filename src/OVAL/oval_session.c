@@ -116,6 +116,32 @@ struct oval_session *oval_session_new(const char *filename)
 	return session;
 }
 
+struct oval_session *oval_session_new_from_memory(const char *buffer, size_t size, const char *filename)
+{
+	oscap_document_type_t scap_type;
+	struct oval_session *session;
+
+	session = (struct oval_session *) calloc(1, sizeof(struct oval_session));
+
+	session->source = oscap_source_new_from_memory(buffer, size, filename);
+	if ((scap_type = oscap_source_get_scap_type(session->source)) == OSCAP_DOCUMENT_UNKNOWN) {
+		oval_session_free(session);
+		return NULL;
+	}
+
+	if (scap_type != OSCAP_DOCUMENT_OVAL_DEFINITIONS && scap_type != OSCAP_DOCUMENT_SDS) {
+		oscap_seterr(OSCAP_EFAMILY_OSCAP, "Session input file was determined but it"
+				" isn't an OVAL file nor a source datastream file.");
+		oval_session_free(session);
+		return NULL;
+	}
+
+	session->export_sys_chars = true;
+
+	dI("Created a new OVAL session from memory of size %u, input file name '%s'.", size, filename);
+	return session;
+}
+
 void oval_session_set_variables(struct oval_session *session, const char *filename)
 {
 	__attribute__nonnull__(session);

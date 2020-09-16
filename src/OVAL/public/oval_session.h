@@ -38,6 +38,7 @@
 #define OVAL_SESSION_H_
 #include "oscap_download_cb.h"
 #include "oscap_export.h"
+#include "oval_external_probe.h"
 
 /**
  * @struct oval_session
@@ -57,6 +58,20 @@ struct oval_session;
  * oscap_err_get_full_error to get more details)
  */
 OSCAP_API struct oval_session *oval_session_new(const char *filename);
+
+/**
+ * Costructor of an \ref oval_session. It will load OVAL Definitions from a memory buffer.
+ *
+ * @memberof oval_session
+ * @param buffer a memory buffer containing raw or Bzip-compressed XML data
+ * @param size the size of the memory buffer, in bytes
+ * @param filename optional path or description of the source filename
+ *
+ * @returns a newly created \ref oval_session
+ * @retval NULL in case of an error (use \ref oscap_err_desc or \ref
+ * oscap_err_get_full_error to get more details)
+ */
+OSCAP_API struct oval_session *oval_session_new_from_memory(const char *buffer, size_t size, const char *filename);
 
 /**
  * Set OVAL Variables.
@@ -241,7 +256,6 @@ OSCAP_API void oval_session_set_export_system_characteristics(struct oval_sessio
  */
 OSCAP_API void oval_session_set_remote_resources(struct oval_session *session, bool allowed, download_progress_calllback_t callback);
 
-#ifdef EXTERNAL_PROBE_COLLECT
 /**
  * Set external probe evaluation callback function (only when EXTERNAL_PROBE_COLLECT is defined)
  * @memberof oval_session
@@ -249,7 +263,6 @@ OSCAP_API void oval_session_set_remote_resources(struct oval_session *session, b
  * @param ext_probe_eval Probe evaluation function. Can be set to NULL to disable external probe evaluation.
  */
 OSCAP_API void oval_session_set_external_probe_eval(struct oval_session *session, oval_external_probe_eval_fn_registration_t *ext_probe_eval);
-#endif
 
 /**
  * Destructor of an \ref oval_session.
