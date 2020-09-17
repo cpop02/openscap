@@ -473,7 +473,7 @@ OSCAP_API SEXP_t *probe_ctx_getresult(probe_ctx *ctx);
 /**
  * Return the external probe evaluation function (if any).
  */
-OSCAP_API oval_external_probe_eval_fn_registration_t *probe_get_external_probe_eval(probe_ctx *ctx);
+OSCAP_API oval_external_probe_eval_funcs_t *probe_get_external_probe_eval(probe_ctx *ctx);
 #endif
 
 typedef struct {

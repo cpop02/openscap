@@ -60,7 +60,7 @@ struct SEAP_CTX {
         uint16_t send_timeout;
 	oval_subtype_t subtype;
 #ifdef EXTERNAL_PROBE_COLLECT
-        oval_external_probe_eval_fn_registration_t ext_probe_eval;
+        oval_external_probe_eval_funcs_t ext_probe_eval;
 #endif
 };
 typedef struct SEAP_CTX SEAP_CTX_t;

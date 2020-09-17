@@ -92,7 +92,7 @@ int ext_environmentvariable_probe_main(probe_ctx* ctx, void* arg) {
     SEXP_t* oid = NULL;
     oval_external_probe_result_t* res = NULL;
     int err = PROBE_ENOVAL;
-    oval_external_probe_eval_fn_registration_t* eval;
+    oval_external_probe_eval_funcs_t* eval;
 
     probe_in = probe_ctx_getobject(ctx);
     ent = probe_obj_getent(probe_in, "name", 1);
@@ -112,7 +112,7 @@ int ext_environmentvariable_probe_main(probe_ctx* ctx, void* arg) {
     eval = probe_get_external_probe_eval(ctx);
     if (eval != NULL) {
         char* id = SEXP_string_cstr(oid);
-        res = eval->ext_probe_eval(eval->ext_probe_eval_ctx, id, OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE, NULL);
+        res = eval->environmentvariable_probe(eval->probe_ctx, id);
         free(id);
 
         if (res == NULL) {

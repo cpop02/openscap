@@ -278,7 +278,7 @@ int app_collect_oval(const struct oscap_action* action) {
 
     /* create probe session */
 #ifdef EXTERNAL_PROBE_COLLECT
-    oval_external_probe_eval_fn_registration_t eval = {external_probe_eval_fn, (void*)0x666};
+    oval_external_probe_eval_funcs_t eval = {external_probe_eval_fn, (void*)0x666};
     pb_sess = oval_probe_session_new(sys_model, &eval);
 #else
     pb_sess = oval_probe_session_new(sys_model);
@@ -367,7 +367,7 @@ int app_evaluate_oval(const struct oscap_action* action) {
     }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-    oval_external_probe_eval_fn_registration_t eval = {external_probe_eval_fn, (void*)0x666};
+    oval_external_probe_eval_funcs_t eval = {external_probe_eval_fn, (void*)0x666};
     oval_session_set_external_probe_eval(session, &eval);
 #endif
 

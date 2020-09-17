@@ -63,7 +63,7 @@ typedef struct {
         oval_subtype_t subtype;
 	struct probe_common_main_argument *arg;
 #ifdef EXTERNAL_PROBE_COLLECT
-        oval_external_probe_eval_fn_registration_t ext_probe_eval;
+        oval_external_probe_eval_funcs_t ext_probe_eval;
 #endif
 } SEAP_desc_t;
 
@@ -78,7 +78,7 @@ typedef struct {
 #define SDTABLE_REALLOC_ADD 4
 
 #ifdef EXTERNAL_PROBE_COLLECT
-int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data, oval_external_probe_eval_fn_registration_t *ext_probe_eval);
+int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data, oval_external_probe_eval_funcs_t *ext_probe_eval);
 #else
 int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data);
 #endif

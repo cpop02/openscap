@@ -90,7 +90,7 @@ static const struct oval_result_to_xccdf_spec XCCDF_OVAL_RESULTS_MAP[] = {
 };
 
 #ifdef EXTERNAL_PROBE_COLLECT
-oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name, oval_external_probe_eval_fn_registration_t *ext_probe_eval)
+oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name, oval_external_probe_eval_funcs_t *ext_probe_eval)
 #else
 oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *model, const char * name) 
 #endif

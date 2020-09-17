@@ -86,7 +86,7 @@ struct oval_session {
 	download_progress_calllback_t progress;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-    oval_external_probe_eval_fn_registration_t ext_probe_eval;
+    oval_external_probe_eval_funcs_t ext_probe_eval;
 #endif
 };
 
@@ -494,7 +494,7 @@ void oval_session_set_remote_resources(struct oval_session *session, bool allowe
 }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-void oval_session_set_external_probe_eval(struct oval_session *session, oval_external_probe_eval_fn_registration_t* ext_probe_eval)
+void oval_session_set_external_probe_eval(struct oval_session *session, oval_external_probe_eval_funcs_t* ext_probe_eval)
 {
 	__attribute__nonnull__(session);
 	__attribute__nonnull__(ext_probe_eval);

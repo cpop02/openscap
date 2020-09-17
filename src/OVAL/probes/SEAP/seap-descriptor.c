@@ -40,7 +40,7 @@ SEAP_desctable_t *SEAP_desctable_new (void)
 }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data, oval_external_probe_eval_fn_registration_t *ext_probe_eval)
+int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme, void *scheme_data, oval_external_probe_eval_funcs_t *ext_probe_eval)
 #else
 int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme,
                    void *scheme_data)

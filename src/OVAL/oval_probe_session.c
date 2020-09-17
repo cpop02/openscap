@@ -147,7 +147,7 @@ static void oval_probe_session_init_keep_ext_probe_eval_fn(oval_probe_session_t*
 }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_fn_registration_t *ext_probe_eval)
+oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_funcs_t *ext_probe_eval)
 {
         oval_probe_session_t *sess = malloc(sizeof(oval_probe_session_t));
 	sess->ext_probe_eval = *ext_probe_eval;	// this must be set before init, which expects it to be valid

@@ -41,7 +41,7 @@ typedef struct oval_probe_session oval_probe_session_t;
  * @param model system characteristics model
  */
  #ifdef EXTERNAL_PROBE_COLLECT
-OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_fn_registration_t *ext_probe_eval);
+OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_funcs_t *ext_probe_eval);
 #else
 OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model);
 #endif

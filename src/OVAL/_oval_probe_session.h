@@ -46,7 +46,7 @@ struct oval_probe_session {
         char         *dir;  /**< probe session directory */
         uint32_t      flg;  /**< probe session flags */
 #ifdef EXTERNAL_PROBE_COLLECT
-        oval_external_probe_eval_fn_registration_t ext_probe_eval;
+        oval_external_probe_eval_funcs_t ext_probe_eval;
 #endif
 };
 

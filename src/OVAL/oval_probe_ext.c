@@ -60,7 +60,7 @@ static oval_pd_t    *oval_pdtbl_get(oval_pdtbl_t *table, oval_subtype_t type);
  * oval_pext_
  */
 #ifdef EXTERNAL_PROBE_COLLECT
-oval_pext_t *oval_pext_new(oval_external_probe_eval_fn_registration_t *ext_probe_eval)
+oval_pext_t *oval_pext_new(oval_external_probe_eval_funcs_t *ext_probe_eval)
 {
         oval_pext_t *pext = malloc(sizeof(oval_pext_t));
 

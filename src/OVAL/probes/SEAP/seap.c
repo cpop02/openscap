@@ -65,8 +65,7 @@ static void SEAP_CTX_initdefault (SEAP_CTX_t *ctx)
         ctx->cflags       = 0;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-        ctx->ext_probe_eval.ext_probe_eval = NULL;
-        ctx->ext_probe_eval.ext_probe_eval_ctx = NULL;
+        memset(&ctx->ext_probe_eval, 0, sizeof(ctx->ext_probe_eval));
 #endif
 
         return;
@@ -328,7 +327,7 @@ int __SEAP_recvmsg_process_cmd (SEAP_CTX_t *ctx, int sd, SEAP_cmd_t *cmd)
 }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-void SEAP_CTX_set_external_probe_eval_fn(SEAP_CTX_t *ctx, oval_external_probe_eval_fn_registration_t *ext_probe_eval) {
+void SEAP_CTX_set_external_probe_eval_fn(SEAP_CTX_t *ctx, oval_external_probe_eval_funcs_t *ext_probe_eval) {
         _A(ctx != NULL);
         _A(ext_probe_eval != NULL);
         ctx->ext_probe_eval = *ext_probe_eval;

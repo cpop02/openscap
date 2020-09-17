@@ -262,7 +262,7 @@ OSCAP_API void oval_session_set_remote_resources(struct oval_session *session, b
  * @param session an \ref oval_session
  * @param ext_probe_eval Probe evaluation function. Can be set to NULL to disable external probe evaluation.
  */
-OSCAP_API void oval_session_set_external_probe_eval(struct oval_session *session, oval_external_probe_eval_fn_registration_t *ext_probe_eval);
+OSCAP_API void oval_session_set_external_probe_eval(struct oval_session *session, oval_external_probe_eval_funcs_t *ext_probe_eval);
 
 /**
  * Destructor of an \ref oval_session.
