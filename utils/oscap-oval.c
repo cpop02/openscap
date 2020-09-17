@@ -179,52 +179,62 @@ static int app_oval_callback(const struct oval_result_definition* res_def, void*
 #if defined(OVAL_PROBES_ENABLED)
 
 #ifdef EXTERNAL_PROBE_COLLECT
-static oval_external_probe_result_t* external_probe_eval_fn(void* ctx,
-                                                            char* id,
-                                                            oval_subtype_t probe_type,
-                                                            oval_external_probe_value_map_t* fields) {
+
+static void dump_oval_external_probe_value_map(const char* prefix, oval_external_probe_value_map_t* fields) {
+    if (fields == NULL)
+        return;
+
+    const char* name;
+    oval_external_probe_value_t* value;
+    int i = 0;
+
+    OVAL_EXTERNAL_PROBE_VALUE_MAP_FOREACH(fields, name, value, {
+        oval_datatype_t type = oval_external_probe_value_get_datatype(value);
+
+        char val_str[16384];
+        switch (type) {
+            case OVAL_DATATYPE_STRING:
+                snprintf(val_str, 16384, "%s", oval_external_probe_value_get_string(value));
+                val_str[16383] = 0;
+                break;
+            case OVAL_DATATYPE_BOOLEAN:
+                sprintf(val_str, "%s", oval_external_probe_value_get_boolean(value) ? "true" : "false");
+                break;
+            case OVAL_DATATYPE_INTEGER:
+                sprintf(val_str, "%lld", oval_external_probe_value_get_integer(value));
+                break;
+            case OVAL_DATATYPE_FLOAT:
+                sprintf(val_str, "%f", oval_external_probe_value_get_float(value));
+                break;
+            default:
+                sprintf(val_str, "UNKNOWN");
+        }
+
+        printf("%s: [%d] field=%s type=%s value=%s\n", prefix, i++, name, oval_datatype_get_text(type), val_str);
+    })
+}
+
+static oval_external_probe_result_t* external_environmentvariable_probe(void* ctx, char* id) {
+    printf("EXTPROBE: external_environmentvariable_probe(%p, %s)\n", ctx, id);
+
+    // Get rid of unused function warning
+    dump_oval_external_probe_value_map("", NULL);
+    
     oval_external_probe_result_t* res = oval_external_probe_result_new(id);
-
-    printf("SORIN: external_probe_eval_fn(%p, %s, %s)\n", ctx, id, oval_subtype_to_str(probe_type));
-
-    if (fields != NULL) {
-        const char* name;
-        oval_external_probe_value_t* value;
-        int i = 0;
-
-        OVAL_EXTERNAL_PROBE_VALUE_MAP_FOREACH(fields, name, value, {
-            oval_datatype_t type = oval_external_probe_value_get_datatype(value);
-
-            char val_str[16384];
-            switch (type) {
-                case OVAL_DATATYPE_STRING:
-                    snprintf(val_str, 16384, "%s", oval_external_probe_value_get_string(value));
-                    val_str[16383] = 0;
-                    break;
-                case OVAL_DATATYPE_BOOLEAN:
-                    sprintf(val_str, "%s", oval_external_probe_value_get_boolean(value) ? "true" : "false");
-                    break;
-                case OVAL_DATATYPE_INTEGER:
-                    sprintf(val_str, "%lld", oval_external_probe_value_get_integer(value));
-                    break;
-                case OVAL_DATATYPE_FLOAT:
-                    sprintf(val_str, "%f", oval_external_probe_value_get_float(value));
-                    break;
-                default:
-                    sprintf(val_str, "UNKNOWN");
-            }
-
-            printf("    SORIN: external_probe_eval_fn: [%d] field=%s type=%s value=%s\n", i++, name, oval_datatype_get_text(type), val_str);
-        })
-    }
-
-    oval_external_probe_value_map_t *vars = oval_external_probe_value_map_new("PATH", oval_external_probe_value_new_string("/some/folder"),
-        "CLOUD", oval_external_probe_value_new_string("dodo-red"), NULL);
+    oval_external_probe_value_map_t *vars = oval_external_probe_value_map_new(
+        "PATH", oval_external_probe_value_new_string("/some/folder"),
+        "CLOUD", oval_external_probe_value_new_string("dodo-red"), NULL
+    );
     
     oval_external_probe_result_set_fields(res, vars);
     oval_external_probe_result_set_status(res, 0);
-
     return res;
+}
+
+static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t* eval) {
+    memset(eval, 0, sizeof(*eval));
+    eval->system_info_probe = (void*)0x666;
+    eval->environmentvariable_probe = external_environmentvariable_probe;
 }
 #endif
 
@@ -278,7 +288,8 @@ int app_collect_oval(const struct oscap_action* action) {
 
     /* create probe session */
 #ifdef EXTERNAL_PROBE_COLLECT
-    oval_external_probe_eval_funcs_t eval = {external_probe_eval_fn, (void*)0x666};
+    oval_external_probe_eval_funcs_t eval;
+    fill_external_probe_eval_funcs(&eval);
     pb_sess = oval_probe_session_new(sys_model, &eval);
 #else
     pb_sess = oval_probe_session_new(sys_model);
@@ -367,7 +378,8 @@ int app_evaluate_oval(const struct oscap_action* action) {
     }
 
 #ifdef EXTERNAL_PROBE_COLLECT
-    oval_external_probe_eval_funcs_t eval = {external_probe_eval_fn, (void*)0x666};
+    oval_external_probe_eval_funcs_t eval;
+    fill_external_probe_eval_funcs(&eval);
     oval_session_set_external_probe_eval(session, &eval);
 #endif
 

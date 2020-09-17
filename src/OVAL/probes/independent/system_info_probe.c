@@ -50,15 +50,19 @@
  *    any [0..*]
  */
 
+#include "oval_external_probe.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include "system_info_probe.h"
 
 #include "_seap.h"
 #include <probe-api.h>
 #include <probe/probe.h>
 #include <probe/option.h>
 #include <debug_priv.h>
+
+#ifndef EXTERNAL_PROBE_COLLECT
 
 #ifdef OS_WINDOWS
 /* By defining WIN32_LEAN_AND_MEAN we ensure that Windows.h won't include
@@ -82,7 +86,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include "system_info_probe.h"
 #include "oscap_helpers.h"
 
 #define _REGEX_RES_VECSIZE     12
@@ -686,12 +689,12 @@ int system_info_probe_offline_mode_supported()
 int system_info_probe_main(probe_ctx *ctx, void *arg)
 {
 	SEXP_t *item = NULL;
-	char *os_name, *architecture, *hname, *os_version = NULL;
+	char *os_name, *architecture, *hname, *os_version;
 	const char unknown[] = "Unknown";
 	int ret = 0;
 	(void)arg;
 
-	os_name = architecture = hname = NULL;
+	os_name = architecture = hname = os_version = NULL;
 
 #ifdef OS_WINDOWS
 	WCHAR computer_name_wstr[MAX_COMPUTERNAME_LENGTH + 1];
@@ -765,3 +768,76 @@ cleanup:
 
 	return ret;
 }
+
+#else // EXTERNAL_PROBE_COLLECT
+
+int system_info_probe_offline_mode_supported()
+{
+	return PROBE_OFFLINE_NONE;
+}
+
+int system_info_probe_main(probe_ctx *ctx, void *arg)
+{
+	oval_external_probe_eval_funcs_t* eval = probe_get_external_probe_eval(ctx);
+    if (eval == NULL || eval->system_info_probe == NULL)
+		return PROBE_EOPNOTSUPP;
+
+	const char unknown[] = "Unknown";
+	const char *os_name, *architecture, *hname, *os_version;
+    SEXP_t* oid = NULL;
+	SEXP_t *item = NULL;
+    oval_external_probe_result_t* res = NULL;
+	int err = PROBE_ENOVAL;
+
+	SEXP_t *probe_in = probe_ctx_getobject(ctx);
+
+    oid = probe_obj_getattrval(probe_in, "id");
+	if (oid == NULL)
+		goto cleanup;
+
+	char *id = SEXP_string_cstr(oid);
+	res = eval->system_info_probe(eval->probe_ctx, id);
+	free(id);
+
+	if (res == NULL) {
+		goto cleanup;
+	}
+
+	err = oval_external_probe_result_get_status(res);
+	if (err != 0)
+		goto cleanup;
+
+	/* All four elements are required */
+	os_name = oval_external_probe_result_get_field_string(res, "os_name");
+	if (!os_name)
+		os_name = unknown;
+
+	os_version = oval_external_probe_result_get_field_string(res, "os_version");
+	if (!os_version)
+		os_version = strdup(unknown);
+
+	architecture = oval_external_probe_result_get_field_string(res, "os_architecture");
+	if (!architecture)
+		architecture = unknown;
+
+	hname = oval_external_probe_result_get_field_string(res, "primary_host_name");
+	if (!hname)
+		hname = unknown;
+
+	item = probe_item_create(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, NULL,
+	                         "os_name",           OVAL_DATATYPE_STRING, os_name,
+	                         "os_version",        OVAL_DATATYPE_STRING, os_version,
+	                         "os_architecture",   OVAL_DATATYPE_STRING, architecture,
+	                         "primary_host_name", OVAL_DATATYPE_STRING, hname,
+	                         NULL);
+	probe_item_collect(ctx, item);
+
+cleanup:
+	oval_external_probe_result_free(res);
+	SEXP_free(oid);
+
+	return err;
+}
+
+#endif // EXTERNAL_PROBE_COLLECT
+

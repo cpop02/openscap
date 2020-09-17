@@ -39,7 +39,7 @@ if (ENABLE_PROBES)
 		$<TARGET_OBJECTS:probe_object>
 		$<TARGET_OBJECTS:seap_object>
 	)
-	if (ENABLE_PROBES_INDEPENDENT)
+	if (ENABLE_PROBES_INDEPENDENT OR EXTERNAL_PROBE_COLLECT)
 		list(APPEND OBJECTS_TO_LINK_AGAINST
 			$<TARGET_OBJECTS:independent_probes_object>
 		)
@@ -62,11 +62,6 @@ if (ENABLE_PROBES)
 	if (ENABLE_PROBES_WINDOWS)
 		list(APPEND OBJECTS_TO_LINK_AGAINST
 			$<TARGET_OBJECTS:windows_probes_object>
-		)
-	endif()
-	if (EXTERNAL_PROBE_COLLECT)
-		list(APPEND OBJECTS_TO_LINK_AGAINST
-			$<TARGET_OBJECTS:ext_probes_object>
 		)
 	endif()
 endif()
