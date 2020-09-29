@@ -231,9 +231,30 @@ static oval_external_probe_result_t* external_environmentvariable_probe(void* ct
     return res;
 }
 
+static oval_external_probe_result_t* external_system_info_probe(void* ctx, char* id) {
+    printf("EXTPROBE: external_system_info_probe(%p, %s)\n", ctx, id);
+
+    // Get rid of unused function warning
+    dump_oval_external_probe_value_map("", NULL);
+    
+    oval_external_probe_result_t* res = oval_external_probe_result_new(id);
+    oval_external_probe_value_map_t *vars = oval_external_probe_value_map_new(
+        "os_name", oval_external_probe_value_new_string("Windows"),
+        "os_version", oval_external_probe_value_new_string("XP"),
+		"os_architecture", oval_external_probe_value_new_string("x86"),
+		"primary_host_name", oval_external_probe_value_new_string("ExternalProbeMachine"),
+        NULL
+    );
+    
+    oval_external_probe_result_set_fields(res, vars);
+    oval_external_probe_result_set_status(res, 0);
+    return res;
+}
+
 static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t* eval) {
     memset(eval, 0, sizeof(*eval));
-    eval->system_info_probe = (void*)0x666;
+    eval->probe_ctx = (void*)0x666;
+    eval->system_info_probe = external_system_info_probe;
     eval->environmentvariable_probe = external_environmentvariable_probe;
 }
 #endif
