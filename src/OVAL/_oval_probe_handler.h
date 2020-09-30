@@ -61,6 +61,9 @@ typedef struct oval_ph oval_ph_t;
 struct oval_phtbl {
         struct oval_ph **ph;
         uint32_t         sz;
+#ifdef EXTERNAL_PROBE_COLLECT
+        void            *default_uptr;
+#endif
 };
 typedef struct oval_phtbl oval_phtbl_t;
 
@@ -68,6 +71,9 @@ oval_phtbl_t *oval_phtbl_new(void);
 void oval_phtbl_free(oval_phtbl_t *phtbl);
 oval_ph_t *oval_probe_handler_get(oval_phtbl_t *phtbl, oval_subtype_t type);
 int oval_probe_handler_set(oval_phtbl_t *phtbl, oval_subtype_t type, oval_probe_handler_t *handler, void *uptr);
-
+#ifdef EXTERNAL_PROBE_COLLECT
+void *oval_probe_handler_get_default_uptr(oval_phtbl_t *phtbl);
+void oval_probe_handler_set_default_uptr(oval_phtbl_t *phtbl, void *uptr);
+#endif
 /// @}
 #endif /* _OVAL_PROBE_HANDLER */

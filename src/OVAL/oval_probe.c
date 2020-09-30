@@ -141,8 +141,17 @@ int oval_probe_query_object(oval_probe_session_t *psess, struct oval_object *obj
 		*out_syschar = sysc;
 
 	ph = oval_probe_handler_get(psess->ph, type);
+	void *uptr = NULL;
 
-	if (ph == NULL) {
+	if (ph != NULL)
+	    uptr = ph->uptr;
+
+#ifdef EXTERNAL_PROBE_COLLECT
+    if (uptr == NULL)
+        uptr = oval_probe_handler_get_default_uptr(psess->ph);
+#endif
+
+	if (uptr == NULL) {
 		char *msg = oscap_sprintf("OVAL object '%s_object' is not supported.", type_name);
 
 		dW("%s", msg);
@@ -153,7 +162,7 @@ int oval_probe_query_object(oval_probe_session_t *psess, struct oval_object *obj
 		return 1;
 	}
 
-	if ((ret = oval_probe_ext_handler(type, ph->uptr, PROBE_HANDLER_ACT_EVAL, sysc, flags)) != 0) {
+	if ((ret = oval_probe_ext_handler(type, uptr, PROBE_HANDLER_ACT_EVAL, sysc, flags)) != 0) {
 		return ret;
 	}
 

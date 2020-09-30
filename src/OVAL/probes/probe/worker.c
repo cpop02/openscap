@@ -47,6 +47,7 @@
 #include "worker.h"
 #include "probe-table.h"
 #include "probe.h"
+#include "default_probe.h"
 
 extern bool  OSCAP_GSYM(varref_handling);
 extern void *OSCAP_GSYM(probe_arg);
@@ -1097,8 +1098,18 @@ SEXP_t *probe_worker(probe_t *probe, SEAP_msg_t *msg_in, int *ret)
 
 
 
+#ifdef EXTERNAL_PROBE_COLLECT
+			if (probe_main_function != NULL) {
+				dI("I will run %s_probe_main:", subtype_str);
+				*ret = probe_main_function(&pctx, probe->probe_arg);
+			} else {
+				dI("I will run default probe function for %s:", subtype_str);
+				*ret = default_probe_main(&pctx, subtype);
+			}
+#else
 			dI("I will run %s_probe_main:", subtype_str);
 			*ret = probe_main_function(&pctx, probe->probe_arg);
+#endif
 
 			pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &__unused_oldstate);
 

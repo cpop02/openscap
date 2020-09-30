@@ -41,7 +41,9 @@ oval_phtbl_t *oval_phtbl_new(void)
         oval_phtbl_t *phtbl = malloc(sizeof(oval_phtbl_t));
         phtbl->ph = NULL;
         phtbl->sz = 0;
-
+#ifdef EXTERNAL_PROBE_COLLECT
+        phtbl->default_uptr = NULL;
+#endif
         return(phtbl);
 }
 
@@ -119,5 +121,17 @@ fillrec:
 
         return(ret);
 }
+
+#ifdef EXTERNAL_PROBE_COLLECT
+
+void *oval_probe_handler_get_default_uptr(oval_phtbl_t *phtbl) {
+    return phtbl->default_uptr;
+}
+
+void oval_probe_handler_set_default_uptr(oval_phtbl_t *phtbl, void *uptr) {
+    phtbl->default_uptr = uptr;
+}
+
+#endif
 
 /// @}

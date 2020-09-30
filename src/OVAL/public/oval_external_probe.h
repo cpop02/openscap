@@ -41,6 +41,7 @@ struct oval_external_probe_value_map_iterator;
  */
 typedef struct oval_external_probe_eval_funcs {
     void* probe_ctx;
+    oval_external_probe_result_t* (*default_probe)(void* ctx, oval_subtype_t probe_type, char* id);
     oval_external_probe_result_t* (*environmentvariable_probe)(void* ctx, char* id);
     oval_external_probe_result_t* (*system_info_probe)(void* ctx, char* id);
 } oval_external_probe_eval_funcs_t;
@@ -104,7 +105,7 @@ OSCAP_API void oval_external_probe_value_map_iterator_free(struct oval_external_
 OSCAP_API bool oval_external_probe_value_map_iterator_has_more(struct oval_external_probe_value_map_iterator* it);
 OSCAP_API const char* oval_external_probe_value_map_iterator_next_key(struct oval_external_probe_value_map_iterator* it);
 
-// Do not return from 'code' ! Otherwise the iterator will not be freed.
+// Do not return from 'code' or use 'goto' to a label outside 'code' ! Otherwise the iterator will not be freed.
 #define OVAL_EXTERNAL_PROBE_VALUE_MAP_FOREACH(map, key_var, val_var, code)                                              \
     {                                                                                                                   \
         struct oval_external_probe_value_map_iterator *map##_iter = oval_external_probe_value_map_iterator_new(map);    \

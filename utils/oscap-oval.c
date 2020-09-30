@@ -214,6 +214,21 @@ static void dump_oval_external_probe_value_map(const char* prefix, oval_external
     })
 }
 
+static oval_external_probe_result_t* default_external_probe(void* ctx, oval_subtype_t probe_type, char* id) {
+    const char *probe_type_str = oval_subtype_get_text(probe_type);
+    printf("EXTPROBE: default_external_probe(%p, %s, %s)\n", ctx, probe_type_str, id);
+    
+    oval_external_probe_result_t* res = oval_external_probe_result_new(id);
+    oval_external_probe_value_map_t *vars = oval_external_probe_value_map_new(
+        "PATH", oval_external_probe_value_new_string("/some/folder"),
+        "CLOUD", oval_external_probe_value_new_string("dodo-red"), NULL
+    );
+    
+    oval_external_probe_result_set_fields(res, vars);
+    oval_external_probe_result_set_status(res, 0);
+    return res;
+}
+
 static oval_external_probe_result_t* external_environmentvariable_probe(void* ctx, char* id) {
     printf("EXTPROBE: external_environmentvariable_probe(%p, %s)\n", ctx, id);
 
@@ -254,6 +269,7 @@ static oval_external_probe_result_t* external_system_info_probe(void* ctx, char*
 static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t* eval) {
     memset(eval, 0, sizeof(*eval));
     eval->probe_ctx = (void*)0x666;
+    eval->default_probe = default_external_probe;
     eval->system_info_probe = external_system_info_probe;
     eval->environmentvariable_probe = external_environmentvariable_probe;
 }

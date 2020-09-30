@@ -123,6 +123,7 @@ static void oval_probe_session_init_keep_ext_probe_eval_fn(oval_probe_session_t*
     sess->flg = 0;
 #ifdef EXTERNAL_PROBE_COLLECT
     sess->pext = oval_pext_new(&sess->ext_probe_eval);
+    oval_probe_handler_set_default_uptr(sess->ph, sess->pext);
 #else
     sess->pext = oval_pext_new();
 #endif

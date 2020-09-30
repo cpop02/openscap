@@ -482,6 +482,7 @@ typedef struct {
 } probe_elmatr_t;
 
 OSCAP_API SEXP_t *probe_item_create(oval_subtype_t item_subtype, probe_elmatr_t *item_attributes[], ...);
+OSCAP_API int probe_item_add_value(SEXP_t *item, const char *value_name, oval_datatype_t value_type, void *pvalue);
 
 #define PROBE_ENT_AREF(ent, dst, attr_name, invalid_exp)		\
 	do {								\
