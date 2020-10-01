@@ -41,7 +41,7 @@ struct oval_external_probe_value_map_iterator;
  */
 typedef struct oval_external_probe_eval_funcs {
     void* probe_ctx;
-    oval_external_probe_result_t* (*default_probe)(void* ctx, oval_subtype_t probe_type, char* id);
+    oval_external_probe_result_t* (*default_probe)(void* ctx, oval_subtype_t probe_type, char* id, oval_external_probe_value_map_t* values);
     oval_external_probe_result_t* (*environmentvariable_probe)(void* ctx, char* id);
     oval_external_probe_result_t* (*system_info_probe)(void* ctx, char* id);
 } oval_external_probe_eval_funcs_t;
@@ -118,6 +118,7 @@ OSCAP_API const char* oval_external_probe_value_map_iterator_next_key(struct ova
     }
 
 OSCAP_API oval_external_probe_value_t* oval_external_probe_value_new_string(char* val);
+OSCAP_API oval_external_probe_value_t* oval_external_probe_value_new_stringf(char* fmt, ...);
 
 OSCAP_API oval_external_probe_value_t* oval_external_probe_value_new_boolean(bool val);
 

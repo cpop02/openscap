@@ -143,6 +143,38 @@ oval_external_probe_value_t* oval_external_probe_value_new_string(char* val) {
     return value;
 }
 
+oval_external_probe_value_t* oval_external_probe_value_new_stringf(char* fmt, ...) {
+    va_list ap, copy;
+    char *v_string = NULL;
+    int v_strlen = 0;
+
+    va_start(ap, fmt);
+    va_copy(copy, ap);
+    v_strlen = vsnprintf(v_string, v_strlen, fmt, copy);
+    va_end(copy);
+    if (v_strlen < 0) {
+        return NULL;
+    }
+    v_strlen++; /* For '\0' */
+    v_string = malloc(v_strlen);
+    v_strlen = vsnprintf(v_string, v_strlen, fmt, ap);
+    if (v_strlen < 0) {
+        free(v_string);
+        return NULL;
+    }
+    va_end(ap);
+
+    oval_external_probe_value_t* value = (oval_external_probe_value_t*)malloc(sizeof(oval_external_probe_value_t));
+    if (value == NULL) {
+        free(v_string);
+        return NULL;
+    }
+
+    value->datatype = OVAL_DATATYPE_STRING;
+    value->str_val = v_string;
+    return value;
+}
+
 oval_external_probe_value_t* oval_external_probe_value_new_boolean(bool val) {
     oval_external_probe_value_t* value = (oval_external_probe_value_t*)malloc(sizeof(oval_external_probe_value_t));
     if (value == NULL)
