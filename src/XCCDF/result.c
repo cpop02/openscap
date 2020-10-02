@@ -77,6 +77,7 @@
 #include "common/debug_priv.h"
 #include "source/oscap_source_priv.h"
 #include "oscap_helpers.h"
+#include "common/public/oscap_xml_helpers.h"
 
 #define XCCDF_NUMERIC_SIZE 32
 

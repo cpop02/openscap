@@ -34,6 +34,7 @@
 #include "common/elements.h"
 #include "source/oscap_source_priv.h"
 #include "source/public/oscap_source.h"
+#include "common/public/oscap_xml_helpers.h"
 
 struct xccdf_tailoring *xccdf_tailoring_new(void)
 {

@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 
 #include "public/oscap.h"
+#include "public/oscap_xml_helpers.h"
 #include "util.h"
 #include "list.h"
 #include "_error.h"

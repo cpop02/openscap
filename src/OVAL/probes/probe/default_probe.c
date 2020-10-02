@@ -8,12 +8,12 @@
 
 #ifdef EXTERNAL_PROBE_COLLECT
 
-static oval_external_probe_value_map_t *convert_probe_ents(SEXP_t *probe_in) {
+static oval_external_probe_value_map_t *extract_probe_ents(SEXP_t *probe_in)
+{
     SEXP_t *objents, *ent, *ent_name;
 
     ent = NULL;
     objents = SEXP_list_rest(probe_in);
-
     oval_external_probe_value_map_t *values = oval_external_probe_value_map_new(NULL, NULL);
 
     SEXP_list_foreach(ent, objents) {
@@ -60,6 +60,8 @@ static oval_external_probe_value_map_t *convert_probe_ents(SEXP_t *probe_in) {
                 dW("Skipping unknown/unsupported SEXP type %s", SEXP_datatype(sval));
             }
 
+            SEXP_free(sval);
+
             if (val != NULL) {
                 char name[1024];
                 SEXP_string_cstr_r(ent_name, name, sizeof(name));
@@ -71,10 +73,12 @@ static oval_external_probe_value_map_t *convert_probe_ents(SEXP_t *probe_in) {
         SEXP_free(ent_name);
     }
 
+    SEXP_free(objents);
     return values;
 }
 
-int default_probe_main(probe_ctx *ctx, oval_subtype_t probe_type) {
+int default_probe_main(probe_ctx *ctx, oval_subtype_t probe_type)
+{
     oval_external_probe_eval_funcs_t *eval = probe_get_external_probe_eval(ctx);
     if (eval == NULL || eval->default_probe == NULL)
         return PROBE_EOPNOTSUPP;
@@ -91,7 +95,11 @@ int default_probe_main(probe_ctx *ctx, oval_subtype_t probe_type) {
     int err = PROBE_ENOVAL;
 
     char *id = SEXP_string_cstr(oid);
-    res = eval->default_probe(eval->probe_ctx, probe_type, id, convert_probe_ents(probe_in));
+    oval_external_probe_value_map_t *probe_ents = extract_probe_ents(probe_in);
+
+    res = eval->default_probe(eval->probe_ctx, probe_type, id, probe_ents);
+
+    oval_external_probe_value_map_free(probe_ents);
     free(id);
 
     if (res == NULL) {

@@ -60,137 +60,142 @@
 #include "oscap-tool.h"
 #include "scap_ds.h"
 
-#if defined(OVAL_PROBES_ENABLED)
-
-static int app_collect_oval(const struct oscap_action *action);
-
-static int app_evaluate_oval(const struct oscap_action *action);
-
+#ifdef EXTERNAL_PROBE_COLLECT
+#include <oscap_xml_helpers.h>
 #endif
-
-static int app_oval_validate(const struct oscap_action *action);
-
-static int app_oval_xslt(const struct oscap_action *action);
-
-static int app_analyse_oval(const struct oscap_action *action);
 
 #if defined(OVAL_PROBES_ENABLED)
 
-static bool getopt_oval_eval(int argc, char **argv, struct oscap_action *action);
+static int app_collect_oval(const struct oscap_action* action);
 
-static bool getopt_oval_collect(int argc, char **argv, struct oscap_action *action);
+static int app_evaluate_oval(const struct oscap_action* action);
 
 #endif
 
-static bool getopt_oval_analyse(int argc, char **argv, struct oscap_action *action);
+static int app_oval_validate(const struct oscap_action* action);
 
-static bool getopt_oval_validate(int argc, char **argv, struct oscap_action *action);
+static int app_oval_xslt(const struct oscap_action* action);
 
-static bool getopt_oval_report(int argc, char **argv, struct oscap_action *action);
+static int app_analyse_oval(const struct oscap_action* action);
 
-static bool valid_inputs(const struct oscap_action *action);
+#if defined(OVAL_PROBES_ENABLED)
+
+static bool getopt_oval_eval(int argc, char** argv, struct oscap_action* action);
+
+static bool getopt_oval_collect(int argc, char** argv, struct oscap_action* action);
+
+#endif
+
+static bool getopt_oval_analyse(int argc, char** argv, struct oscap_action* action);
+
+static bool getopt_oval_validate(int argc, char** argv, struct oscap_action* action);
+
+static bool getopt_oval_report(int argc, char** argv, struct oscap_action* action);
+
+static bool valid_inputs(const struct oscap_action* action);
 
 #define OVAL_SUBMODULES_NUM 7
 #define OVAL_GEN_SUBMODULES_NUM             \
     2 /* See actual OVAL_GEN_SUBMODULES and \
     OVAL_SUBMODULES arrays initialization below. */
-static struct oscap_module *OVAL_SUBMODULES[OVAL_SUBMODULES_NUM];
-static struct oscap_module *OVAL_GEN_SUBMODULES[OVAL_GEN_SUBMODULES_NUM];
+static struct oscap_module* OVAL_SUBMODULES[OVAL_SUBMODULES_NUM];
+static struct oscap_module* OVAL_GEN_SUBMODULES[OVAL_GEN_SUBMODULES_NUM];
 
 struct oscap_module OSCAP_OVAL_MODULE = {.name = "oval",
-        .parent = &OSCAP_ROOT_MODULE,
-        .summary = "Open Vulnerability and Assessment Language",
-        .submodules = OVAL_SUBMODULES};
+                                         .parent = &OSCAP_ROOT_MODULE,
+                                         .summary = "Open Vulnerability and Assessment Language",
+                                         .submodules = OVAL_SUBMODULES};
 
 static struct oscap_module OVAL_VALIDATE = {.name = "validate",
-        .parent = &OSCAP_OVAL_MODULE,
-        .summary = "Validate OVAL XML content",
-        .usage = "[options] oval-file.xml",
-        .help =
-        "Options:\n"
-        "   --definitions                 - Validate OVAL Definitions\n"
-        "   --variables                   - Validate external OVAL Variables\n"
-        "   --syschar                     - Validate OVAL System Characteristics\n"
-        "   --results                     - Validate OVAL Results\n"
-        "   --schematron                  - Use schematron-based validation in addition to XML Schema\n",
-        .opt_parser = getopt_oval_validate,
-        .func = app_oval_validate};
+                                            .parent = &OSCAP_OVAL_MODULE,
+                                            .summary = "Validate OVAL XML content",
+                                            .usage = "[options] oval-file.xml",
+                                            .help =
+                                                "Options:\n"
+                                                "   --definitions                 - Validate OVAL Definitions\n"
+                                                "   --variables                   - Validate external OVAL Variables\n"
+                                                "   --syschar                     - Validate OVAL System Characteristics\n"
+                                                "   --results                     - Validate OVAL Results\n"
+                                                "   --schematron                  - Use schematron-based validation in addition to XML Schema\n",
+                                            .opt_parser = getopt_oval_validate,
+                                            .func = app_oval_validate};
 
 #if defined(OVAL_PROBES_ENABLED)
 static struct oscap_module OVAL_EVAL = {.name = "eval",
-        .parent = &OSCAP_OVAL_MODULE,
-        .summary = "Probe the system and evaluate definitions from OVAL Definition file",
-        .usage = "[options] oval-definitions.xml",
-        .help =
-        "Options:\n"
-        "   --id <definition-id>          - ID of the definition we want to evaluate.\n"
-        "   --variables <file>            - Provide external variables expected by OVAL Definitions.\n"
-        "   --directives <file>           - Use OVAL Directives content to specify desired results content.\n"
-        "   --without-syschar             - Don't provide system characteristic in result file.\n"
-        "   --results <file>              - Write OVAL Results into file.\n"
-        "   --report <file>               - Create human readable (HTML) report from OVAL Results.\n"
-        "   --skip-valid                  - Skip validation.\n"
-        "   --datastream-id <id>          - ID of the datastream in the collection to use.\n"
-        "                                   (only applicable for source datastreams)\n"
-        "   --oval-id <id>                - ID of the OVAL component ref in the datastream to use.\n"
-        "                                   (only applicable for source datastreams)\n"
-        "   --fetch-remote-resources      - Download remote content referenced by OVAL Definitions.\n"
-        "                                   (only applicable for source datastreams)\n",
-        .opt_parser = getopt_oval_eval,
-        .func = app_evaluate_oval};
+                                        .parent = &OSCAP_OVAL_MODULE,
+                                        .summary = "Probe the system and evaluate definitions from OVAL Definition file",
+                                        .usage = "[options] oval-definitions.xml",
+                                        .help =
+                                            "Options:\n"
+                                            "   --id <definition-id>          - ID of the definition we want to evaluate.\n"
+                                            "   --variables <file>            - Provide external variables expected by OVAL Definitions.\n"
+                                            "   --directives <file>           - Use OVAL Directives content to specify desired results content.\n"
+                                            "   --without-syschar             - Don't provide system characteristic in result file.\n"
+                                            "   --results <file>              - Write OVAL Results into file.\n"
+                                            "   --report <file>               - Create human readable (HTML) report from OVAL Results.\n"
+                                            "   --datapoints <file>           - Write extracted datapoints to file (CrowdStrike extension).\n"
+                                            "   --skip-valid                  - Skip validation.\n"
+                                            "   --datastream-id <id>          - ID of the datastream in the collection to use.\n"
+                                            "                                   (only applicable for source datastreams)\n"
+                                            "   --oval-id <id>                - ID of the OVAL component ref in the datastream to use.\n"
+                                            "                                   (only applicable for source datastreams)\n"
+                                            "   --fetch-remote-resources      - Download remote content referenced by OVAL Definitions.\n"
+                                            "                                   (only applicable for source datastreams)\n",
+                                        .opt_parser = getopt_oval_eval,
+                                        .func = app_evaluate_oval};
 
 static struct oscap_module OVAL_COLLECT = {.name = "collect",
-        .parent = &OSCAP_OVAL_MODULE,
-        .summary = "Probe the system and create system characteristics",
-        .usage = "[options] oval-definitions.xml",
-        .help =
-        "Options:\n"
-        "   --id <object>                 - Collect system characteristics ONLY for specified OVAL Object.\n"
-        "   --syschar <file>              - Write OVAL System Characteristic into file.\n"
-        "   --variables <file>            - Provide external variables expected by OVAL Definitions.\n"
-        "   --skip-valid                  - Skip validation.\n",
-        .opt_parser = getopt_oval_collect,
-        .func = app_collect_oval};
+                                           .parent = &OSCAP_OVAL_MODULE,
+                                           .summary = "Probe the system and create system characteristics",
+                                           .usage = "[options] oval-definitions.xml",
+                                           .help =
+                                               "Options:\n"
+                                               "   --id <object>                 - Collect system characteristics ONLY for specified OVAL Object.\n"
+                                               "   --syschar <file>              - Write OVAL System Characteristic into file.\n"
+                                               "   --variables <file>            - Provide external variables expected by OVAL Definitions.\n"
+                                               "   --skip-valid                  - Skip validation.\n",
+                                           .opt_parser = getopt_oval_collect,
+                                           .func = app_collect_oval};
 #endif /* OVAL_PROBES_ENABLED */
 
 static struct oscap_module OVAL_ANALYSE = {.name = "analyse",
-        .parent = &OSCAP_OVAL_MODULE,
-        .summary = "Evaluate provided system characteristics file",
-        .usage = "[options] --results FILE oval-definitions.xml system-characteristics.xml",
-        .help =
-        "Options:\n"
-        "   --variables <file>            - Provide external variables expected by OVAL Definitions.\n"
-        "   --directives <file>           - Use OVAL Directives content to specify desired results content.\n"
-        "   --skip-valid                  - Skip validation.\n",
-        .opt_parser = getopt_oval_analyse,
-        .func = app_analyse_oval};
+                                           .parent = &OSCAP_OVAL_MODULE,
+                                           .summary = "Evaluate provided system characteristics file",
+                                           .usage = "[options] --results FILE oval-definitions.xml system-characteristics.xml",
+                                           .help =
+                                               "Options:\n"
+                                               "   --variables <file>            - Provide external variables expected by OVAL Definitions.\n"
+                                               "   --directives <file>           - Use OVAL Directives content to specify desired results content.\n"
+                                               "   --skip-valid                  - Skip validation.\n",
+                                           .opt_parser = getopt_oval_analyse,
+                                           .func = app_analyse_oval};
 
 static struct oscap_module OVAL_GENERATE = {.name = "generate",
-        .parent = &OSCAP_OVAL_MODULE,
-        .summary = "Convert an OVAL file to other formats",
-        .usage_extra = "<subcommand> [sub-options] oval-file.xml",
-        .submodules = OVAL_GEN_SUBMODULES};
+                                            .parent = &OSCAP_OVAL_MODULE,
+                                            .summary = "Convert an OVAL file to other formats",
+                                            .usage_extra = "<subcommand> [sub-options] oval-file.xml",
+                                            .submodules = OVAL_GEN_SUBMODULES};
 
 static struct oscap_module OVAL_REPORT = {.name = "report",
-        .parent = &OVAL_GENERATE,
-        .summary = "Generate a HTML report from OVAL results file",
-        .usage = "[options] oval-file.xml",
-        .help =
-        "Options:\n"
-        "   --output <file>               - Write the HTML into file.",
-        .opt_parser = getopt_oval_report,
-        .user = "oval-results-report.xsl",
-        .func = app_oval_xslt};
+                                          .parent = &OVAL_GENERATE,
+                                          .summary = "Generate a HTML report from OVAL results file",
+                                          .usage = "[options] oval-file.xml",
+                                          .help =
+                                              "Options:\n"
+                                              "   --output <file>               - Write the HTML into file.",
+                                          .opt_parser = getopt_oval_report,
+                                          .user = "oval-results-report.xsl",
+                                          .func = app_oval_xslt};
 
-static struct oscap_module *OVAL_GEN_SUBMODULES[OVAL_GEN_SUBMODULES_NUM] = {&OVAL_REPORT, NULL};
+static struct oscap_module* OVAL_GEN_SUBMODULES[OVAL_GEN_SUBMODULES_NUM] = {&OVAL_REPORT, NULL};
 
-static struct oscap_module *OVAL_SUBMODULES[OVAL_SUBMODULES_NUM] = {
+static struct oscap_module* OVAL_SUBMODULES[OVAL_SUBMODULES_NUM] = {
 #if defined(OVAL_PROBES_ENABLED)
-        &OVAL_COLLECT, &OVAL_EVAL,
+    &OVAL_COLLECT, &OVAL_EVAL,
 #endif
-        &OVAL_ANALYSE, &OVAL_VALIDATE, &OVAL_GENERATE, NULL};
+    &OVAL_ANALYSE, &OVAL_VALIDATE, &OVAL_GENERATE, NULL};
 
-static int app_oval_callback(const struct oval_result_definition *res_def, void *arg) {
+static int app_oval_callback(const struct oval_result_definition* res_def, void* arg) {
     oval_result_t result = oval_result_definition_get_result(res_def);
 
     printf("Definition %s: %s\n", oval_result_definition_get_id(res_def), oval_result_get_text(result));
@@ -202,12 +207,12 @@ static int app_oval_callback(const struct oval_result_definition *res_def, void 
 
 #ifdef EXTERNAL_PROBE_COLLECT
 
-static void dump_oval_external_probe_value_map(const char *prefix, oval_external_probe_value_map_t *fields) {
+static void dump_oval_external_probe_value_map(const char* prefix, oval_external_probe_value_map_t* fields) {
     if (fields == NULL)
         return;
 
-    const char *name;
-    oval_external_probe_value_t *value;
+    const char* name;
+    oval_external_probe_value_t* value;
     int i = 0;
 
     OVAL_EXTERNAL_PROBE_VALUE_MAP_FOREACH(fields, name, value, {
@@ -236,31 +241,70 @@ static void dump_oval_external_probe_value_map(const char *prefix, oval_external
     })
 }
 
-static oval_external_probe_result_t *default_external_probe(void *ctx, oval_subtype_t probe_type, char *id, oval_external_probe_value_map_t* values) {
-    const char *probe_type_str = oval_subtype_get_text(probe_type);
+static void datapoint_to_xml(xmlNodePtr parent, const char* probe_type, const char* id, oval_external_probe_value_map_t* fields) {
+    if (fields == NULL)
+        return;
+
+    xmlNodePtr itemNode = xmlNewNode(NULL, BAD_CAST probe_type);
+    xmlNewProp(itemNode, BAD_CAST "id", BAD_CAST id);
+
+    const char* name;
+    oval_external_probe_value_t* value;
+
+    OVAL_EXTERNAL_PROBE_VALUE_MAP_FOREACH(fields, name, value, {
+        oval_datatype_t type = oval_external_probe_value_get_datatype(value);
+
+        char val_str[16384];
+        switch (type) {
+            case OVAL_DATATYPE_STRING:
+                snprintf(val_str, 16384, "%s", oval_external_probe_value_get_string(value));
+                val_str[16383] = 0;
+                break;
+            case OVAL_DATATYPE_BOOLEAN:
+                sprintf(val_str, "%s", oval_external_probe_value_get_boolean(value) ? "true" : "false");
+                break;
+            case OVAL_DATATYPE_INTEGER:
+                sprintf(val_str, "%lld", oval_external_probe_value_get_integer(value));
+                break;
+            case OVAL_DATATYPE_FLOAT:
+                sprintf(val_str, "%f", oval_external_probe_value_get_float(value));
+                break;
+            default:
+                sprintf(val_str, "UNKNOWN");
+        }
+
+        xmlNewTextChild(itemNode, NULL, BAD_CAST name, BAD_CAST val_str);
+    })
+
+    xmlAddChild(parent, itemNode);
+}
+
+static oval_external_probe_result_t* default_external_probe(void* ctx, oval_subtype_t probe_type, char* id, oval_external_probe_value_map_t* values) {
+    xmlNodePtr datapointsNode = (xmlNodePtr)ctx;
+
+    const char* probe_type_str = oval_subtype_get_text(probe_type);
     printf("EXTPROBE: default_external_probe(%p, %s, %s)\n", ctx, probe_type_str, id);
     dump_oval_external_probe_value_map("EXTPROBE: default_external_probe", values);
 
-    oval_external_probe_result_t *res = oval_external_probe_result_new(id);
-    oval_external_probe_value_map_t *vars;
+    oval_external_probe_result_t* res = oval_external_probe_result_new(id);
+    oval_external_probe_value_map_t* vars = NULL;
     int status = 0;
+
+    if (datapointsNode != NULL)
+        datapoint_to_xml(datapointsNode, probe_type_str, id, values);
 
     switch (probe_type) {
         case OVAL_UNIX_PROCESS:
             vars = oval_external_probe_value_map_new(
-                    "command", oval_external_probe_value_new_stringf("${%s#command}", id),
-                    "exec_time", oval_external_probe_value_new_stringf("${%s#exec_time}", id),
-                    "pid", oval_external_probe_value_new_integer(0),
-                    "ppid", oval_external_probe_value_new_integer(0),
-                    "priority", oval_external_probe_value_new_integer(0),
-                    "ruid", oval_external_probe_value_new_integer(0),
-                    "scheduling_class", oval_external_probe_value_new_stringf("${%s#scheduling_class}", id),
-                    "start_time", oval_external_probe_value_new_stringf("${%s#start_time}", id),
-                    "tty", oval_external_probe_value_new_stringf("${%s#tty}", id),
-                    "user_id", oval_external_probe_value_new_integer(0),
-                    NULL);
+                "command", oval_external_probe_value_new_stringf("${%s#command}", id), "exec_time",
+                oval_external_probe_value_new_stringf("${%s#exec_time}", id), "pid", oval_external_probe_value_new_integer(0), "ppid",
+                oval_external_probe_value_new_integer(0), "priority", oval_external_probe_value_new_integer(0), "ruid",
+                oval_external_probe_value_new_integer(0), "scheduling_class", oval_external_probe_value_new_stringf("${%s#scheduling_class}", id),
+                "start_time", oval_external_probe_value_new_stringf("${%s#start_time}", id), "tty",
+                oval_external_probe_value_new_stringf("${%s#tty}", id), "user_id", oval_external_probe_value_new_integer(0), NULL);
             break;
         default:
+//            status = PROBE_EOPNOTSUPP;
             vars = oval_external_probe_value_map_new("value", oval_external_probe_value_new_stringf("${%s#value}", id), NULL);
     }
 
@@ -269,46 +313,41 @@ static oval_external_probe_result_t *default_external_probe(void *ctx, oval_subt
     return res;
 }
 
-static oval_external_probe_result_t *external_environmentvariable_probe(void *ctx, char *id) {
+static oval_external_probe_result_t* external_environmentvariable_probe(void* ctx, char* id) {
+    //    xmlNodePtr datapointsNode = (xmlNodePtr) ctx;
     printf("EXTPROBE: external_environmentvariable_probe(%p, %s)\n", ctx, id);
 
     // Get rid of unused function warning
     dump_oval_external_probe_value_map("", NULL);
 
-    oval_external_probe_result_t *res = oval_external_probe_result_new(id);
-    oval_external_probe_value_map_t *vars = oval_external_probe_value_map_new(
-            "PATH", oval_external_probe_value_new_string("/some/folder"),
-            "CLOUD", oval_external_probe_value_new_string("dodo-red"), NULL
-    );
+    oval_external_probe_result_t* res = oval_external_probe_result_new(id);
+    oval_external_probe_value_map_t* vars = oval_external_probe_value_map_new("PATH", oval_external_probe_value_new_string("/some/folder"), "CLOUD",
+                                                                              oval_external_probe_value_new_string("dodo-red"), NULL);
 
     oval_external_probe_result_set_fields(res, vars);
     oval_external_probe_result_set_status(res, 0);
     return res;
 }
 
-static oval_external_probe_result_t *external_system_info_probe(void *ctx, char *id) {
+static oval_external_probe_result_t* external_system_info_probe(void* ctx, char* id) {
+    //    xmlDocPtr datapointsDoc = (xmlDocPtr) ctx;
     printf("EXTPROBE: external_system_info_probe(%p, %s)\n", ctx, id);
 
     // Get rid of unused function warning
     dump_oval_external_probe_value_map("", NULL);
 
-    oval_external_probe_result_t *res = oval_external_probe_result_new(id);
-    oval_external_probe_value_map_t *vars = oval_external_probe_value_map_new(
-            "os_name", oval_external_probe_value_new_string("Windows"),
-            "os_version", oval_external_probe_value_new_string("XP"),
-            "os_architecture", oval_external_probe_value_new_string("x86"),
-            "primary_host_name", oval_external_probe_value_new_string("ExternalProbeMachine"),
-            NULL
-    );
+    oval_external_probe_result_t* res = oval_external_probe_result_new(id);
+    oval_external_probe_value_map_t* vars = oval_external_probe_value_map_new(
+        "os_name", oval_external_probe_value_new_string("Windows"), "os_version", oval_external_probe_value_new_string("XP"), "os_architecture",
+        oval_external_probe_value_new_string("x86"), "primary_host_name", oval_external_probe_value_new_string("ExternalProbeMachine"), NULL);
 
     oval_external_probe_result_set_fields(res, vars);
     oval_external_probe_result_set_status(res, 0);
     return res;
 }
 
-static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t *eval) {
+static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t* eval) {
     memset(eval, 0, sizeof(*eval));
-    eval->probe_ctx = (void *) 0x666;
     eval->default_probe = default_external_probe;
     eval->system_info_probe = external_system_info_probe;
     eval->environmentvariable_probe = external_environmentvariable_probe;
@@ -316,13 +355,13 @@ static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t *eva
 
 #endif
 
-int app_collect_oval(const struct oscap_action *action) {
-    struct oval_definition_model *def_model = NULL;
-    struct oval_variable_model *var_model = NULL;
-    struct oval_syschar_model *sys_model = NULL;
-    struct oval_sysinfo *sysinfo = NULL;
-    struct oval_probe_session *pb_sess = NULL;
-    struct oval_generator *generator = NULL;
+int app_collect_oval(const struct oscap_action* action) {
+    struct oval_definition_model* def_model = NULL;
+    struct oval_variable_model* var_model = NULL;
+    struct oval_syschar_model* sys_model = NULL;
+    struct oval_sysinfo* sysinfo = NULL;
+    struct oval_probe_session* pb_sess = NULL;
+    struct oval_generator* generator = NULL;
     int ret = OSCAP_ERROR;
 
     /* validate inputs */
@@ -333,7 +372,7 @@ int app_collect_oval(const struct oscap_action *action) {
     }
 
     /* import definitions */
-    struct oscap_source *source = oscap_source_new_from_file(action->f_oval);
+    struct oscap_source* source = oscap_source_new_from_file(action->f_oval);
     def_model = oval_definition_model_import_source(source);
     oscap_source_free(source);
     if (def_model == NULL) {
@@ -343,7 +382,7 @@ int app_collect_oval(const struct oscap_action *action) {
 
     /* bind external variables */
     if (action->f_variables) {
-        struct oscap_source *var_source = oscap_source_new_from_file(action->f_variables);
+        struct oscap_source* var_source = oscap_source_new_from_file(action->f_variables);
         var_model = oval_variable_model_import_source(var_source);
         oscap_source_free(var_source);
         if (var_model == NULL) {
@@ -382,8 +421,8 @@ int app_collect_oval(const struct oscap_action *action) {
     oval_syschar_model_set_sysinfo(sys_model, sysinfo);
 
     /* query objects */
-    struct oval_object *object;
-    struct oval_syschar *syschar;
+    struct oval_object* object;
+    struct oval_syschar* syschar;
     oval_syschar_collection_flag_t sc_flg;
     if (action->id) {
         object = oval_definition_model_get_object(def_model, action->id);
@@ -396,7 +435,7 @@ int app_collect_oval(const struct oscap_action *action) {
         sc_flg = oval_syschar_get_flag(syschar);
         printf("%s\n", oval_syschar_collection_flag_get_text(sc_flg));
     } else {
-        struct oval_object_iterator *objects = oval_definition_model_get_objects(def_model);
+        struct oval_object_iterator* objects = oval_definition_model_get_objects(def_model);
         while (oval_object_iterator_has_more(objects)) {
             object = oval_object_iterator_next(objects);
             printf("Collected: \"%s\" : ", oval_object_get_id(object));
@@ -407,7 +446,7 @@ int app_collect_oval(const struct oscap_action *action) {
         oval_object_iterator_free(objects);
     }
 
-    const char *full_validation = getenv("OSCAP_FULL_VALIDATION");
+    const char* full_validation = getenv("OSCAP_FULL_VALIDATION");
 
     /* output */
     if (action->f_syschar != NULL) {
@@ -416,8 +455,8 @@ int app_collect_oval(const struct oscap_action *action) {
 
         /* validate OVAL System Characteristics */
         if (action->validate && full_validation) {
-            struct oscap_source *syschar_source = oscap_source_new_from_file(action->f_syschar);
-            if (oscap_source_validate(syschar_source, reporter, (void *) action)) {
+            struct oscap_source* syschar_source = oscap_source_new_from_file(action->f_syschar);
+            if (oscap_source_validate(syschar_source, reporter, (void*)action)) {
                 oscap_source_free(syschar_source);
                 goto cleanup;
             }
@@ -428,7 +467,7 @@ int app_collect_oval(const struct oscap_action *action) {
 
     ret = OSCAP_OK;
 
-    cleanup:
+cleanup:
     if (oscap_err())
         fprintf(stderr, "%s %s\n", OSCAP_ERR_MSG, oscap_err_desc());
 
@@ -444,8 +483,8 @@ int app_collect_oval(const struct oscap_action *action) {
     return ret;
 }
 
-int app_evaluate_oval(const struct oscap_action *action) {
-    struct oval_session *session = NULL;
+int app_evaluate_oval(const struct oscap_action* action) {
+    struct oval_session* session = NULL;
     oval_result_t eval_result;
     int ret = OSCAP_ERROR;
 
@@ -456,8 +495,22 @@ int app_evaluate_oval(const struct oscap_action *action) {
     }
 
 #ifdef EXTERNAL_PROBE_COLLECT
+    xmlDocPtr datapointsDoc = NULL;
+    xmlNodePtr datapointsNode = NULL;
+    if (action->f_datapoints != NULL) {
+        datapointsDoc = xmlNewDoc(BAD_CAST "1.0");
+        if (datapointsDoc == NULL) {
+            // oscap_setxmlerr(xmlGetLastError());
+            oscap_print_error();
+            return ret;
+        }
+        datapointsNode = xmlNewNode(NULL, BAD_CAST "datapoints");
+        xmlDocSetRootElement(datapointsDoc, datapointsNode);
+    }
+
     oval_external_probe_eval_funcs_t eval;
     fill_external_probe_eval_funcs(&eval);
+    eval.probe_ctx = datapointsNode;
     oval_session_set_external_probe_eval(session, &eval);
 #endif
 
@@ -500,7 +553,13 @@ int app_evaluate_oval(const struct oscap_action *action) {
 
     ret = OSCAP_OK;
 
-    cleanup:
+cleanup:
+#ifdef EXTERNAL_PROBE_COLLECT
+    if (datapointsDoc != NULL) {
+        oscap_xml_save_filename_free(action->f_datapoints, datapointsDoc);
+    }
+#endif
+
     oscap_print_error();
     oval_session_free(session);
     return ret;
@@ -508,14 +567,14 @@ int app_evaluate_oval(const struct oscap_action *action) {
 
 #endif /* OVAL_PROBES_ENABLED */
 
-static int app_analyse_oval(const struct oscap_action *action) {
-    struct oval_definition_model *def_model = NULL;
-    struct oval_syschar_model *sys_model = NULL;
-    struct oval_results_model *res_model = NULL;
-    struct oval_variable_model *var_model = NULL;
-    struct oval_directives_model *dir_model = NULL;
-    struct oval_syschar_model *sys_models[2];
-    struct oval_generator *generator = NULL;
+static int app_analyse_oval(const struct oscap_action* action) {
+    struct oval_definition_model* def_model = NULL;
+    struct oval_syschar_model* sys_model = NULL;
+    struct oval_results_model* res_model = NULL;
+    struct oval_variable_model* var_model = NULL;
+    struct oval_directives_model* dir_model = NULL;
+    struct oval_syschar_model* sys_models[2];
+    struct oval_generator* generator = NULL;
     int ret = OSCAP_ERROR;
 
     /* validate inputs */
@@ -526,7 +585,7 @@ static int app_analyse_oval(const struct oscap_action *action) {
     }
 
     /* load defnitions */
-    struct oscap_source *source = oscap_source_new_from_file(action->f_oval);
+    struct oscap_source* source = oscap_source_new_from_file(action->f_oval);
     def_model = oval_definition_model_import_source(source);
     oscap_source_free(source);
     if (def_model == NULL) {
@@ -536,7 +595,7 @@ static int app_analyse_oval(const struct oscap_action *action) {
 
     /* bind external variables */
     if (action->f_variables) {
-        struct oscap_source *var_source = oscap_source_new_from_file(action->f_variables);
+        struct oscap_source* var_source = oscap_source_new_from_file(action->f_variables);
         var_model = oval_variable_model_import_source(var_source);
         oscap_source_free(var_source);
         if (var_model == NULL) {
@@ -577,7 +636,7 @@ static int app_analyse_oval(const struct oscap_action *action) {
         /* import directives */
         if (action->f_directives != NULL) {
             dir_model = oval_directives_model_new();
-            struct oscap_source *dir_source = oscap_source_new_from_file(action->f_directives);
+            struct oscap_source* dir_source = oscap_source_new_from_file(action->f_directives);
             oval_directives_model_import_source(dir_model, dir_source);
             oscap_source_free(dir_source);
         }
@@ -585,12 +644,12 @@ static int app_analyse_oval(const struct oscap_action *action) {
         /* export result model to XML */
         oval_results_model_export(res_model, dir_model, action->f_results);
 
-        const char *full_validation = getenv("OSCAP_FULL_VALIDATION");
+        const char* full_validation = getenv("OSCAP_FULL_VALIDATION");
 
         /* validate OVAL Results */
         if (action->validate && full_validation) {
-            struct oscap_source *result_source = oscap_source_new_from_file(action->f_results);
-            if (oscap_source_validate(result_source, reporter, (void *) action)) {
+            struct oscap_source* result_source = oscap_source_new_from_file(action->f_results);
+            if (oscap_source_validate(result_source, reporter, (void*)action)) {
                 oscap_source_free(result_source);
                 goto cleanup;
             }
@@ -601,8 +660,8 @@ static int app_analyse_oval(const struct oscap_action *action) {
 
     ret = OSCAP_OK;
 
-    /* clean up */
-    cleanup:
+/* clean up */
+cleanup:
     if (oscap_err())
         fprintf(stderr, "%s %s\n", OSCAP_ERR_MSG, oscap_err_desc());
 
@@ -618,7 +677,7 @@ static int app_analyse_oval(const struct oscap_action *action) {
     return ret;
 }
 
-static int app_oval_xslt(const struct oscap_action *action) {
+static int app_oval_xslt(const struct oscap_action* action) {
     assert(action->module->user);
     return app_xslt(action->f_oval, action->module->user, action->f_results, NULL);
 }
@@ -626,6 +685,7 @@ static int app_oval_xslt(const struct oscap_action *action) {
 enum oval_opt {
     OVAL_OPT_RESULT_FILE = 1,
     OVAL_OPT_REPORT_FILE,
+    OVAL_OPT_DATAPOINTS_FILE,
     OVAL_OPT_ID,
     OVAL_OPT_VARIABLES,
     OVAL_OPT_SYSCHAR,
@@ -637,21 +697,22 @@ enum oval_opt {
 
 #if defined(OVAL_PROBES_ENABLED)
 
-bool getopt_oval_eval(int argc, char **argv, struct oscap_action *action) {
+bool getopt_oval_eval(int argc, char** argv, struct oscap_action* action) {
     action->doctype = OSCAP_DOCUMENT_OVAL_DEFINITIONS;
 
     /* Command-options */
-    struct option long_options[] = {{"results",                required_argument, NULL,                 OVAL_OPT_RESULT_FILE},
-                                    {"report",                 required_argument, NULL,                 OVAL_OPT_REPORT_FILE},
-                                    {"id",                     required_argument, NULL,                 OVAL_OPT_ID},
-                                    {"variables",              required_argument, NULL,                 OVAL_OPT_VARIABLES},
-                                    {"directives",             required_argument, NULL,                 OVAL_OPT_DIRECTIVES},
-                                    {"without-syschar",        no_argument, &action->without_sys_chars, 1},
-                                    {"datastream-id",          required_argument, NULL,                 OVAL_OPT_DATASTREAM_ID},
-                                    {"oval-id",                required_argument, NULL,                 OVAL_OPT_OVAL_ID},
-                                    {"skip-valid",             no_argument, &action->validate,          0},
-                                    {"fetch-remote-resources", no_argument, &action->remote_resources,  1},
-                                    {0, 0,                                  0,                          0}};
+    struct option long_options[] = {{"results", required_argument, NULL, OVAL_OPT_RESULT_FILE},
+                                    {"report", required_argument, NULL, OVAL_OPT_REPORT_FILE},
+                                    {"datapoints", required_argument, NULL, OVAL_OPT_DATAPOINTS_FILE},
+                                    {"id", required_argument, NULL, OVAL_OPT_ID},
+                                    {"variables", required_argument, NULL, OVAL_OPT_VARIABLES},
+                                    {"directives", required_argument, NULL, OVAL_OPT_DIRECTIVES},
+                                    {"without-syschar", no_argument, &action->without_sys_chars, 1},
+                                    {"datastream-id", required_argument, NULL, OVAL_OPT_DATASTREAM_ID},
+                                    {"oval-id", required_argument, NULL, OVAL_OPT_OVAL_ID},
+                                    {"skip-valid", no_argument, &action->validate, 0},
+                                    {"fetch-remote-resources", no_argument, &action->remote_resources, 1},
+                                    {0, 0, 0, 0}};
 
     int c;
     while ((c = getopt_long(argc, argv, "o:", long_options, NULL)) != -1) {
@@ -661,6 +722,9 @@ bool getopt_oval_eval(int argc, char **argv, struct oscap_action *action) {
                 break;
             case OVAL_OPT_REPORT_FILE:
                 action->f_report = optarg;
+                break;
+            case OVAL_OPT_DATAPOINTS_FILE:
+                action->f_datapoints = optarg;
                 break;
             case OVAL_OPT_ID:
                 action->id = optarg;
@@ -696,15 +760,15 @@ bool getopt_oval_eval(int argc, char **argv, struct oscap_action *action) {
 
 #if defined(OVAL_PROBES_ENABLED)
 
-bool getopt_oval_collect(int argc, char **argv, struct oscap_action *action) {
+bool getopt_oval_collect(int argc, char** argv, struct oscap_action* action) {
     action->doctype = OSCAP_DOCUMENT_OVAL_DEFINITIONS;
 
     /* Command-options */
-    struct option long_options[] = {{"id",         required_argument, NULL,        OVAL_OPT_ID},
-                                    {"variables",  required_argument, NULL,        OVAL_OPT_VARIABLES},
-                                    {"syschar",    required_argument, NULL,        OVAL_OPT_SYSCHAR},
+    struct option long_options[] = {{"id", required_argument, NULL, OVAL_OPT_ID},
+                                    {"variables", required_argument, NULL, OVAL_OPT_VARIABLES},
+                                    {"syschar", required_argument, NULL, OVAL_OPT_SYSCHAR},
                                     {"skip-valid", no_argument, &action->validate, 0},
-                                    {0, 0,                      0,                 0}};
+                                    {0, 0, 0, 0}};
 
     int c;
     while ((c = getopt_long(argc, argv, "o:", long_options, NULL)) != -1) {
@@ -735,15 +799,15 @@ bool getopt_oval_collect(int argc, char **argv, struct oscap_action *action) {
 
 #endif /* OVAL_PROBES_ENABLED */
 
-bool getopt_oval_analyse(int argc, char **argv, struct oscap_action *action) {
+bool getopt_oval_analyse(int argc, char** argv, struct oscap_action* action) {
     action->doctype = OSCAP_DOCUMENT_OVAL_DEFINITIONS;
 
     /* Command-options */
-    struct option long_options[] = {{"results",    required_argument, NULL,        OVAL_OPT_RESULT_FILE},
-                                    {"variables",  required_argument, NULL,        OVAL_OPT_VARIABLES},
-                                    {"directives", required_argument, NULL,        OVAL_OPT_DIRECTIVES},
+    struct option long_options[] = {{"results", required_argument, NULL, OVAL_OPT_RESULT_FILE},
+                                    {"variables", required_argument, NULL, OVAL_OPT_VARIABLES},
+                                    {"directives", required_argument, NULL, OVAL_OPT_DIRECTIVES},
                                     {"skip-valid", no_argument, &action->validate, 0},
-                                    {0, 0,                      0,                 0}};
+                                    {0, 0, 0, 0}};
 
     int c;
     while ((c = getopt_long(argc, argv, "o:", long_options, NULL)) != -1) {
@@ -776,20 +840,18 @@ bool getopt_oval_analyse(int argc, char **argv, struct oscap_action *action) {
         action->f_syschar = argv[optind + 1];
 
         if (action->f_results == NULL) {
-            return oscap_module_usage(action->module, stderr,
-                                      "OVAL Results file is not specified(--results parameter)");
+            return oscap_module_usage(action->module, stderr, "OVAL Results file is not specified(--results parameter)");
         }
     }
 
     return true;
 }
 
-bool getopt_oval_report(int argc, char **argv, struct oscap_action *action) {
+bool getopt_oval_report(int argc, char** argv, struct oscap_action* action) {
     action->doctype = OSCAP_DOCUMENT_OVAL_DEFINITIONS;
 
     /* Command-options */
-    struct option long_options[] = {{"output", required_argument, NULL, OVAL_OPT_OUTPUT},
-                                    {0, 0, 0,                           0}};
+    struct option long_options[] = {{"output", required_argument, NULL, OVAL_OPT_OUTPUT}, {0, 0, 0, 0}};
 
     /*
      * it is not nice that we use action->f_results for output and
@@ -816,21 +878,21 @@ bool getopt_oval_report(int argc, char **argv, struct oscap_action *action) {
     return true;
 }
 
-bool getopt_oval_validate(int argc, char **argv, struct oscap_action *action) {
+bool getopt_oval_validate(int argc, char** argv, struct oscap_action* action) {
     /* we assume 0 is unknown */
     action->doctype = 0;
 
     /* Command-options */
     struct option long_options[] = {// flags
-            {"definitions", no_argument, &action->doctype,    OSCAP_DOCUMENT_OVAL_DEFINITIONS},
-            {"variables",   no_argument, &action->doctype,    OSCAP_DOCUMENT_OVAL_VARIABLES},
-            {"syschar",     no_argument, &action->doctype,    OSCAP_DOCUMENT_OVAL_SYSCHAR},
-            {"results",     no_argument, &action->doctype,    OSCAP_DOCUMENT_OVAL_RESULTS},
-            {"directives",  no_argument, &action->doctype,    OSCAP_DOCUMENT_OVAL_DIRECTIVES},
-            // force schematron validation
-            {"schematron",  no_argument, &action->schematron, 1},
-            // end
-            {0, 0,                       0,                   0}};
+                                    {"definitions", no_argument, &action->doctype, OSCAP_DOCUMENT_OVAL_DEFINITIONS},
+                                    {"variables", no_argument, &action->doctype, OSCAP_DOCUMENT_OVAL_VARIABLES},
+                                    {"syschar", no_argument, &action->doctype, OSCAP_DOCUMENT_OVAL_SYSCHAR},
+                                    {"results", no_argument, &action->doctype, OSCAP_DOCUMENT_OVAL_RESULTS},
+                                    {"directives", no_argument, &action->doctype, OSCAP_DOCUMENT_OVAL_DIRECTIVES},
+                                    // force schematron validation
+                                    {"schematron", no_argument, &action->schematron, 1},
+                                    // end
+                                    {0, 0, 0, 0}};
 
     int c;
     while ((c = getopt_long(argc, argv, "", long_options, NULL)) != -1) {
@@ -850,59 +912,57 @@ bool getopt_oval_validate(int argc, char **argv, struct oscap_action *action) {
     return true;
 }
 
-static bool valid_inputs(const struct oscap_action *action) {
+static bool valid_inputs(const struct oscap_action* action) {
     bool result = true;
 
     /* validate SDS or OVAL Definitions & Variables & Syschars,
        depending on the data */
-    struct oscap_source *definitions_source = oscap_source_new_from_file(action->f_oval);
+    struct oscap_source* definitions_source = oscap_source_new_from_file(action->f_oval);
     if (oscap_source_get_scap_type(definitions_source) != OSCAP_DOCUMENT_OVAL_DEFINITIONS &&
         oscap_source_get_scap_type(definitions_source) != OSCAP_DOCUMENT_SDS) {
-        fprintf(stderr, "Type mismatch: %s. Expecting OVAL Definition or Source DataStream, but found %s.\n",
-                action->f_oval,
+        fprintf(stderr, "Type mismatch: %s. Expecting OVAL Definition or Source DataStream, but found %s.\n", action->f_oval,
                 oscap_document_type_to_string(oscap_source_get_scap_type(definitions_source)));
         result = false;
     }
-    if (oscap_source_validate(definitions_source, reporter, (void *) action)) {
+    if (oscap_source_validate(definitions_source, reporter, (void*)action)) {
         result = false;
     }
     oscap_source_free(definitions_source);
 
     if (action->f_variables) {
-        struct oscap_source *variables_source = oscap_source_new_from_file(action->f_variables);
+        struct oscap_source* variables_source = oscap_source_new_from_file(action->f_variables);
         if (oscap_source_get_scap_type(variables_source) != OSCAP_DOCUMENT_OVAL_VARIABLES) {
             fprintf(stderr, "Type mismatch: %s. Expecting OVAL Variables, but found %s.\n", action->f_variables,
                     oscap_document_type_to_string(oscap_source_get_scap_type(variables_source)));
             result = false;
         }
-        if (oscap_source_validate(variables_source, reporter, (void *) action)) {
+        if (oscap_source_validate(variables_source, reporter, (void*)action)) {
             result = false;
         }
         oscap_source_free(variables_source);
     }
 
     if (action->f_directives) {
-        struct oscap_source *directives_source = oscap_source_new_from_file(action->f_directives);
+        struct oscap_source* directives_source = oscap_source_new_from_file(action->f_directives);
         if (oscap_source_get_scap_type(directives_source) != OSCAP_DOCUMENT_OVAL_DIRECTIVES) {
             fprintf(stderr, "Type mismatch: %s. Expecting OVAL Directives, but found %s.\n", action->f_directives,
                     oscap_document_type_to_string(oscap_source_get_scap_type(directives_source)));
             result = false;
         }
-        if (oscap_source_validate(directives_source, reporter, (void *) action)) {
+        if (oscap_source_validate(directives_source, reporter, (void*)action)) {
             result = false;
         }
         oscap_source_free(directives_source);
     }
 
     if (action->module == &OVAL_ANALYSE && action->f_syschar) {
-        struct oscap_source *syschar_source = oscap_source_new_from_file(action->f_syschar);
+        struct oscap_source* syschar_source = oscap_source_new_from_file(action->f_syschar);
         if (oscap_source_get_scap_type(syschar_source) != OSCAP_DOCUMENT_OVAL_SYSCHAR) {
-            fprintf(stderr, "Type mismatch: %s. Expecting OVAL System Characteristic, but found %s.\n",
-                    action->f_syschar,
+            fprintf(stderr, "Type mismatch: %s. Expecting OVAL System Characteristic, but found %s.\n", action->f_syschar,
                     oscap_document_type_to_string(oscap_source_get_scap_type(syschar_source)));
             result = false;
         }
-        if (oscap_source_validate(syschar_source, reporter, (void *) action)) {
+        if (oscap_source_validate(syschar_source, reporter, (void*)action)) {
             result = false;
         }
         oscap_source_free(syschar_source);
@@ -911,12 +971,12 @@ static bool valid_inputs(const struct oscap_action *action) {
     return result;
 }
 
-static int app_oval_validate(const struct oscap_action *action) {
+static int app_oval_validate(const struct oscap_action* action) {
     int ret;
     int result = OSCAP_ERROR;
 
-    struct oscap_source *source = oscap_source_new_from_file(action->f_oval);
-    ret = oscap_source_validate(source, reporter, (void *) action);
+    struct oscap_source* source = oscap_source_new_from_file(action->f_oval);
+    ret = oscap_source_validate(source, reporter, (void*)action);
     if (ret == -1) {
         result = OSCAP_ERROR;
         goto cleanup;
@@ -936,7 +996,7 @@ static int app_oval_validate(const struct oscap_action *action) {
         }
     }
 
-    cleanup:
+cleanup:
     oscap_source_free(source);
     if (oscap_err())
         fprintf(stderr, "%s %s\n", OSCAP_ERR_MSG, oscap_err_desc());
