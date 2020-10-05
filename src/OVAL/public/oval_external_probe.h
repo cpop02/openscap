@@ -41,6 +41,7 @@ struct oval_external_probe_value_map_iterator;
  */
 typedef struct oval_external_probe_eval_funcs {
     void* probe_ctx;
+    bool default_probe_only;    // If true, only call the default probe and ignore specialised probe implementations
     oval_external_probe_result_t* (*default_probe)(void* ctx, oval_subtype_t probe_type, char* id, oval_external_probe_value_map_t* values);
     oval_external_probe_result_t* (*environmentvariable_probe)(void* ctx, char* id);
     oval_external_probe_result_t* (*system_info_probe)(void* ctx, char* id);
