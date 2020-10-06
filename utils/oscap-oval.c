@@ -298,7 +298,7 @@ default_external_probe(void *ctx, oval_subtype_t probe_type, char *id, oval_exte
 
     oval_external_probe_result_t *res = oval_external_probe_result_new(id);
     oval_external_probe_value_map_t *vars = NULL;
-    int status = 0;
+    oval_syschar_status_t status = SYSCHAR_STATUS_PENDING_COLLECT;
 
     if (datapointsNode != NULL)
         datapoint_to_xml(datapointsNode, probe_type_str, id, values);
@@ -306,29 +306,20 @@ default_external_probe(void *ctx, oval_subtype_t probe_type, char *id, oval_exte
     switch (probe_type) {
         case OVAL_INDEPENDENT_SYSCHAR_SUBTYPE:
             vars = oval_external_probe_value_map_new(
-                    "os_name", oval_external_probe_value_new_string("Windows"), "os_version",
-                    oval_external_probe_value_new_string("XP"), "os_architecture",
-                    oval_external_probe_value_new_string("x86"), "primary_host_name",
-                    oval_external_probe_value_new_string("ExternalProbeMachine"), NULL);
-            break;
-        case OVAL_UNIX_PROCESS:
-            vars = oval_external_probe_value_map_new(
-                    "command", oval_external_probe_value_new_stringf("${%s#command}", id),
-                    "exec_time", oval_external_probe_value_new_stringf("${%s#exec_time}", id),
-                    "pid", oval_external_probe_value_new_integer(0),
-                    "ppid", oval_external_probe_value_new_integer(0),
-                    "priority", oval_external_probe_value_new_integer(0),
-                    "ruid", oval_external_probe_value_new_integer(0),
-                    "scheduling_class", oval_external_probe_value_new_stringf("${%s#scheduling_class}", id),
-                    "start_time", oval_external_probe_value_new_stringf("${%s#start_time}", id),
-                    "tty", oval_external_probe_value_new_stringf("${%s#tty}", id),
-                    "user_id", oval_external_probe_value_new_integer(0),
+                    "os_name", oval_external_probe_value_new_string("Windows"),
+                    "os_version", oval_external_probe_value_new_string("XP"),
+                    "os_architecture", oval_external_probe_value_new_string("x86"),
+                    "primary_host_name", oval_external_probe_value_new_string("ExternalProbeMachine"),
                     NULL);
+            status = SYSCHAR_STATUS_EXISTS;
             break;
         default:
-//            status = PROBE_EOPNOTSUPP;
-            vars = oval_external_probe_value_map_new("value", oval_external_probe_value_new_stringf("${%s#value}", id),
-                                                     NULL);
+            vars = generate_windows_probe_datapoints(probe_type, id);
+    }
+
+    if (vars == NULL) {
+        printf("EXTPROBE: default_external_probe(%p, %s, %s) could not generate values\n", ctx, probe_type_str, id);
+        status = SYSCHAR_STATUS_ERROR;
     }
 
     oval_external_probe_result_set_fields(res, vars);
@@ -366,9 +357,9 @@ static oval_external_probe_result_t *external_system_info_probe(void *ctx, char 
     oval_external_probe_result_t *res = oval_external_probe_result_new(id);
     oval_external_probe_value_map_t *vars = oval_external_probe_value_map_new(
             "os_name", oval_external_probe_value_new_string("Windows"),
-            "os_version",oval_external_probe_value_new_string("XP"),
-            "os_architecture",oval_external_probe_value_new_string("x86"),
-            "primary_host_name",oval_external_probe_value_new_string("ExternalProbeMachine"),
+            "os_version", oval_external_probe_value_new_string("XP"),
+            "os_architecture", oval_external_probe_value_new_string("x86"),
+            "primary_host_name", oval_external_probe_value_new_string("ExternalProbeMachine"),
             NULL);
 
     oval_external_probe_result_set_fields(res, vars);
@@ -376,7 +367,8 @@ static oval_external_probe_result_t *external_system_info_probe(void *ctx, char 
     return res;
 }
 
-static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t* eval) {
+static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t *eval)
+{
     memset(eval, 0, sizeof(*eval));
     eval->default_probe = default_external_probe;
     eval->default_probe_only = true;
@@ -499,7 +491,7 @@ int app_collect_oval(const struct oscap_action *action)
 
     ret = OSCAP_OK;
 
-    cleanup:
+cleanup:
     if (oscap_err())
         fprintf(stderr, "%s %s\n", OSCAP_ERR_MSG, oscap_err_desc());
 
@@ -586,7 +578,7 @@ int app_evaluate_oval(const struct oscap_action *action)
 
     ret = OSCAP_OK;
 
-    cleanup:
+cleanup:
 #ifdef EXTERNAL_PROBE_COLLECT
     if (datapointsDoc != NULL) {
         oscap_xml_save_filename_free(action->f_datapoints, datapointsDoc);
@@ -695,7 +687,7 @@ static int app_analyse_oval(const struct oscap_action *action)
     ret = OSCAP_OK;
 
 /* clean up */
-    cleanup:
+cleanup:
     if (oscap_err())
         fprintf(stderr, "%s %s\n", OSCAP_ERR_MSG, oscap_err_desc());
 
@@ -1042,7 +1034,7 @@ static int app_oval_validate(const struct oscap_action *action)
         }
     }
 
-    cleanup:
+cleanup:
     oscap_source_free(source);
     if (oscap_err())
         fprintf(stderr, "%s %s\n", OSCAP_ERR_MSG, oscap_err_desc());

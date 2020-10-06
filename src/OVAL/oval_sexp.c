@@ -178,6 +178,7 @@ static int oval_varref_attr_to_sexp(void *sess, struct oval_entity *entity, stru
 	switch (flag) {
 	case SYSCHAR_FLAG_COMPLETE:
 	case SYSCHAR_FLAG_INCOMPLETE:
+    case SYSCHAR_FLAG_PENDING_COLLECT:
 		vit = oval_variable_get_values(var);
 		if (oval_value_iterator_has_more(vit))
 			break;

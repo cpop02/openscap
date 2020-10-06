@@ -17,7 +17,7 @@
 struct oval_external_probe_result {
     char* name;
     oval_external_probe_value_map_t* fields;
-	int status;
+    oval_syschar_status_t status;
 };
 
 oval_external_probe_result_t* oval_external_probe_result_new(char* name) {
@@ -44,7 +44,7 @@ void oval_external_probe_result_free(oval_external_probe_result_t* ext_res) {
     free(ext_res);
 }
 
-void oval_external_probe_result_set_status(oval_external_probe_result_t* ext_res, int status) {
+void oval_external_probe_result_set_status(oval_external_probe_result_t* ext_res, oval_syschar_status_t status) {
     __attribute__nonnull__(ext_res);
 	ext_res->status = status;
 }
@@ -60,7 +60,7 @@ const char* oval_external_probe_result_get_name(oval_external_probe_result_t* ex
     return ext_res->name;
 }
 
-int oval_external_probe_result_get_status(oval_external_probe_result_t* ext_res) {
+oval_syschar_status_t oval_external_probe_result_get_status(oval_external_probe_result_t* ext_res) {
     __attribute__nonnull__(ext_res);
     return ext_res->status;
 }

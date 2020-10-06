@@ -457,7 +457,7 @@ int oval_syschar_model_compute_variable(struct oval_syschar_model *sysmod, struc
 
 static int _dump_variable_values(struct oval_variable *variable)
 {
-	if (variable->flag != SYSCHAR_FLAG_COMPLETE && variable->flag != SYSCHAR_FLAG_INCOMPLETE) {
+	if (variable->flag != SYSCHAR_FLAG_COMPLETE && variable->flag != SYSCHAR_FLAG_INCOMPLETE && variable->flag != SYSCHAR_FLAG_PENDING_COLLECT) {
 		dI("Variable '%s' has no values.", variable->id);
 		return 0;
 	}

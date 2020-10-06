@@ -995,6 +995,10 @@ _oval_result_test_evaluate_items(struct oval_test *test, struct oval_syschar *sy
 			}
 		}
 		break;
+    case SYSCHAR_FLAG_PENDING_COLLECT:
+        dI("Object '%s' has PENDING_COLLECT flag, unknown result", object_id);
+        result = OVAL_RESULT_UNKNOWN;
+        break;
 	default: {
 		oscap_seterr(OSCAP_EFAMILY_OVAL, "Item corresponding to object '%s' from test '%s' has an unknown flag. This may indicate a bug in OpenSCAP.",
 				object_id, test_id);

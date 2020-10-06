@@ -16,6 +16,7 @@
 #include "oscap_export.h"
 #include "oval_definitions.h"
 #include "oval_types.h"
+#include "oval_system_characteristics.h"
 
 /**
  * @struct oval_external_probe_result
@@ -62,9 +63,9 @@ OSCAP_API void oval_external_probe_result_free(oval_external_probe_result_t*);
  */
 /**
  * @memberof oval_external_probe_result
- * @param status 0 for success or one of the PROBE_ constants defined in @ref PROBEAPI
+ * @param status one of the SYSCHAR_STATUS_ constants defined in @ref OVALSYS
  */
-OSCAP_API void oval_external_probe_result_set_status(oval_external_probe_result_t*, int status);
+OSCAP_API void oval_external_probe_result_set_status(oval_external_probe_result_t*, oval_syschar_status_t status);
 /**
  * @memberof oval_external_probe_result
  */
@@ -83,9 +84,9 @@ OSCAP_API void oval_external_probe_result_set_fields(oval_external_probe_result_
 OSCAP_API const char* oval_external_probe_result_get_name(oval_external_probe_result_t*);
 /**
  * @memberof oval_external_probe_result
- * @return 0 for success or one of the PROBE_ constants defined in @ref PROBEAPI
+ * @return one of the SYSCHAR_STATUS_ constants defined in @ref OVALSYS
  */
-OSCAP_API int oval_external_probe_result_get_status(oval_external_probe_result_t*);
+OSCAP_API oval_syschar_status_t oval_external_probe_result_get_status(oval_external_probe_result_t*);
 /**
  * @memberof oval_external_probe_result
  */

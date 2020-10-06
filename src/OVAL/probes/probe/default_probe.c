@@ -106,9 +106,11 @@ int default_probe_main(probe_ctx *ctx, oval_subtype_t probe_type)
         goto cleanup;
     }
 
-    err = oval_external_probe_result_get_status(res);
-    if (err != 0)
+    oval_syschar_status_t status = oval_external_probe_result_get_status(res);
+    if (status == SYSCHAR_STATUS_ERROR) {
+        err = PROBE_EUNKNOWN;
         goto cleanup;
+    }
 
     SEXP_t *item = probe_item_create(probe_type, NULL, NULL);
 
@@ -152,12 +154,13 @@ int default_probe_main(probe_ctx *ctx, oval_subtype_t probe_type)
             break;
     })
 
-    if (err == 0)
+    if (err == 0) {
+        probe_ent_setstatus(item, status);
         probe_item_collect(ctx, item);
-    else
+    } else
         SEXP_free(item);
 
-    cleanup:
+cleanup:
     oval_external_probe_result_free(res);
     SEXP_free(oid);
 
