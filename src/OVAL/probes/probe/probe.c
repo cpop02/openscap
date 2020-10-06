@@ -40,6 +40,6 @@ SEXP_t *probe_ctx_getresult(probe_ctx *ctx)
 
 #ifdef EXTERNAL_PROBE_COLLECT
 oval_external_probe_eval_funcs_t *probe_get_external_probe_eval(probe_ctx *ctx) {
-        return &(ctx->ext_probe_eval);
+        return ctx->ext_probe_eval;
 }
 #endif

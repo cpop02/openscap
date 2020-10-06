@@ -53,14 +53,20 @@ struct oval_agent_session;
  */
 typedef struct oval_agent_session oval_agent_session_t;
 
+#ifdef EXTERNAL_PROBE_COLLECT
+/**
+ * Create new session for OVAL agent from OVAL definition model
+ * @param model OVAL Definition model
+ * @param name Name of file that can be referenced from XCCDF Benchmark
+ * @param ext_probe_eval A shared external probe eval context. It must be kept alive by the caller.
+ */
+OSCAP_API oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name, oval_external_probe_eval_funcs_t *ext_probe_eval);
+#else
 /**
  * Create new session for OVAL agent from OVAL definition model
  * @param model OVAL Definition model
  * @param name Name of file that can be referenced from XCCDF Benchmark
  */
-#ifdef EXTERNAL_PROBE_COLLECT
-OSCAP_API oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name, oval_external_probe_eval_funcs_t *ext_probe_eval);
-#else
 OSCAP_API oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name);
 #endif
 

@@ -122,7 +122,7 @@ static void oval_probe_session_init_keep_ext_probe_eval_fn(oval_probe_session_t*
     sess->sys_model = model;
     sess->flg = 0;
 #ifdef EXTERNAL_PROBE_COLLECT
-    sess->pext = oval_pext_new(&sess->ext_probe_eval);
+    sess->pext = oval_pext_new(sess->ext_probe_eval);
     oval_probe_handler_set_default_uptr(sess->ph, sess->pext);
 #else
     sess->pext = oval_pext_new();
@@ -151,7 +151,7 @@ static void oval_probe_session_init_keep_ext_probe_eval_fn(oval_probe_session_t*
 oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_external_probe_eval_funcs_t *ext_probe_eval)
 {
         oval_probe_session_t *sess = malloc(sizeof(oval_probe_session_t));
-	sess->ext_probe_eval = *ext_probe_eval;	// this must be set before init, which expects it to be valid
+	sess->ext_probe_eval = ext_probe_eval;	// this must be set before init, which expects it to be valid, and it is shared with the OVAL session
 	oval_probe_session_init_keep_ext_probe_eval_fn(sess, model);
 	return sess;
 }

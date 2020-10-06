@@ -51,6 +51,7 @@
 #include "common/elements.h"
 #include "oscap_source.h"
 #include "source/oscap_source_priv.h"
+#include "common/public/oscap_xml_helpers.h"
 
 
 typedef struct oval_syschar_model {

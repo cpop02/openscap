@@ -27,7 +27,7 @@ struct probe_common_main_argument {
 	oval_subtype_t subtype;
 	sch_queuedata_t *queuedata;
 #ifdef EXTERNAL_PROBE_COLLECT
-    oval_external_probe_eval_funcs_t ext_probe_eval;
+    oval_external_probe_eval_funcs_t *ext_probe_eval;
 #endif
 };
 void *probe_common_main(void *);

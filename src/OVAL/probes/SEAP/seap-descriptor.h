@@ -63,7 +63,7 @@ typedef struct {
         oval_subtype_t subtype;
 	struct probe_common_main_argument *arg;
 #ifdef EXTERNAL_PROBE_COLLECT
-        oval_external_probe_eval_funcs_t ext_probe_eval;
+        oval_external_probe_eval_funcs_t *ext_probe_eval;
 #endif
 } SEAP_desc_t;
 

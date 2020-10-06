@@ -37,11 +37,12 @@
  * value
  */
 
-#include "probe-common.h"
-#include "probes/probe/probe.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include "probe-common.h"
+#include "probes/probe/probe.h"
 
 #include <stdlib.h>
 #include <unistd.h>

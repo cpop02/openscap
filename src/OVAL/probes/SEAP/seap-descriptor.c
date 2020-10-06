@@ -76,7 +76,7 @@ int SEAP_desc_add(SEAP_desctable_t *sd_table, SEAP_scheme_t scheme,
 		sd_dsc->cmd_queue = NULL;
 
 #ifdef EXTERNAL_PROBE_COLLECT
-                sd_dsc->ext_probe_eval = *ext_probe_eval;
+                sd_dsc->ext_probe_eval = ext_probe_eval;
 #endif
 
 		SEAP_packetq_init(&sd_dsc->pck_queue);
