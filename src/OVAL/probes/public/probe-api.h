@@ -474,15 +474,6 @@ OSCAP_API SEXP_t *probe_ctx_getresult(probe_ctx *ctx);
  * Return the external probe evaluation function (if any).
  */
 OSCAP_API oval_external_probe_eval_funcs_t *probe_get_external_probe_eval(probe_ctx *ctx);
-/**
- * Creates an external probe query based on the given probe data.
- */
-OSCAP_API int probe_create_external_probe_query(SEXP_t *probe_in, oval_external_probe_item_t** ext_item_spec);
-/**
- * Collects external probe items.
- */
-OSCAP_API int probe_collect_external_probe_items(probe_ctx *ctx, oval_subtype_t type, oval_syschar_status_t status,
-                                                 oval_external_probe_item_list_t *ext_items);
 #endif
 
 typedef struct {
