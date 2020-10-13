@@ -61,13 +61,6 @@ void oval_external_probe_item_list_push(oval_external_probe_item_list_t* list, o
     oscap_list_push(list->items, item);
 }
 
-int oval_external_probe_item_list_get_length(oval_external_probe_item_list_t* list) {
-    __attribute__nonnull__(list);
-    __attribute__nonnull__(list->items);
-
-    return oscap_list_get_itemcount(list->items);
-}
-
 struct oval_external_probe_item_list_iterator* oval_external_probe_item_list_iterator_new(oval_external_probe_item_list_t* list) {
     __attribute__nonnull__(list);
     __attribute__nonnull__(list->items);

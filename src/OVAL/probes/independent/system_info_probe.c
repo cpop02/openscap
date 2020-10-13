@@ -816,29 +816,18 @@ fail:
     return ret;
 }
 
-static int collect_system_info(probe_ctx *ctx, oval_external_probe_item_list_t *ext_items) {
-    int ret = 0, ext_items_len;
-    oval_external_probe_item_t *ext_item;
+static int collect_system_info(probe_ctx *ctx, oval_external_probe_item_t *ext_item) {
+    int ret = 0;
+    SEXP_t *item = NULL;
     const char *ext_item_value_name;
-    oval_external_probe_item_value_t *ext_item_value_val;
-    SEXP_t *sys_info = NULL;
+    oval_external_probe_item_value_t *ext_item_value;
 
     __attribute__nonnull__(ctx);
-    __attribute__nonnull__(ext_items);
+    __attribute__nonnull__(ext_item);
 
-    ext_items_len = oval_external_probe_item_list_get_length(ext_items);
-    if(ext_items_len != 1) {
-        ret = ext_items_len < 1 ? PROBE_ERANGE : PROBE_EINVAL;
-        goto fail;
-    }
-    sys_info = probe_item_create(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, NULL);
-    OVAL_EXTERNAL_PROBE_ITEM_LIST_FOREACH(ext_items, ext_item, {
-        OVAL_EXTERNAL_PROBE_ITEM_FOREACH(ext_item, ext_item_value_name, ext_item_value_val, {
-            ret = add_system_info(sys_info, ext_item_value_name, ext_item_value_val);
-            if(ret != 0) {
-                break;
-            }
-        })
+    item = probe_item_create(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, NULL);
+    OVAL_EXTERNAL_PROBE_ITEM_FOREACH(ext_item, ext_item_value_name, ext_item_value, {
+        ret = add_system_info(item, ext_item_value_name, ext_item_value);
         if(ret != 0) {
             break;
         }
@@ -847,12 +836,12 @@ static int collect_system_info(probe_ctx *ctx, oval_external_probe_item_list_t *
         goto fail;
     }
     // no need to free the item because probe_item_collect frees it (in almost all cases)
-    ret = probe_item_collect(ctx, sys_info);
+    ret = probe_item_collect(ctx, item);
     // avoid double free
-    sys_info = NULL;
+    item = NULL;
 
 fail:
-    SEXP_free(sys_info);
+    SEXP_free(item);
 
     return ret;
 }
@@ -864,13 +853,8 @@ int system_info_probe_offline_mode_supported()
 
 int system_info_probe_main(probe_ctx *ctx, void *arg) {
     int ret;
-    char *str_id = NULL;
-    SEXP_t *in, *id = NULL;
-    oval_syschar_status_t status;
     oval_external_probe_eval_funcs_t *eval;
-    oval_external_probe_item_t *ext_query = NULL;
-    oval_external_probe_result_t *ext_res = NULL;
-    oval_external_probe_item_list_t *ext_items;
+    oval_external_probe_item_t *ext_res = NULL;
 
     __attribute__nonnull__(ctx);
 
@@ -879,43 +863,15 @@ int system_info_probe_main(probe_ctx *ctx, void *arg) {
         ret = PROBE_EOPNOTSUPP;
         goto fail;
     }
-    in = probe_ctx_getobject(ctx);
-    id = probe_obj_getattrval(in, "id");
-    if(id == NULL) {
-        ret = PROBE_ENOVAL;
-        goto fail;
-    }
-    str_id = SEXP_string_cstr(id);
-    if(str_id == NULL) {
-        ret = PROBE_EUNKNOWN;
-        goto fail;
-    }
-    ret = probe_create_external_probe_query(in, &ext_query);
-    if(ret != 0) {
-        goto fail;
-    }
-    ext_res = eval->system_info_probe(eval->probe_ctx, str_id, ext_query);
+    ext_res = eval->system_info_probe(eval->probe_ctx);
     if(ext_res == NULL) {
         ret = PROBE_EUNKNOWN;
         goto fail;
     }
-    status = oval_external_probe_result_get_status(ext_res);
-    if(status == SYSCHAR_STATUS_ERROR) {
-        ret = PROBE_EUNKNOWN;
-        goto fail;
-    }
-    ext_items = oval_external_probe_result_get_items(ext_res);
-    if(ext_items == NULL) {
-        ret = PROBE_EUNKNOWN;
-        goto fail;
-    }
-    ret = collect_system_info(ctx, ext_items);
+    ret = collect_system_info(ctx, ext_res);
 
 fail:
-    oval_external_probe_result_free(ext_res);
-    oval_external_probe_item_free(ext_query);
-    free(str_id);
-    SEXP_free(id);
+    oval_external_probe_item_free(ext_res);
 
     return ret;
 }

@@ -53,17 +53,19 @@
 #include <probe-api.h>
 #include <probe/probe.h>
 #include <probe/option.h>
+#include "oval_external_probe.h"
 #include "family_probe.h"
+#include "probes/probe/probe.h"
 
-int family_probe_offline_mode_supported()
-{
+#ifndef EXTERNAL_PROBE_COLLECT
+
+int family_probe_offline_mode_supported() {
 	/* We say that the probe supports all offline modes, but in fact
 	   it always returns the same hardocoded string. */
 	return PROBE_OFFLINE_ALL;
 }
 
-int family_probe_main(probe_ctx *ctx, void *arg)
-{
+int family_probe_main(probe_ctx *ctx, void *arg) {
 	SEXP_t *item;
 
         (void)arg;
@@ -89,3 +91,58 @@ int family_probe_main(probe_ctx *ctx, void *arg)
 
 	return (0);
 }
+
+#else
+
+static int collect_family(probe_ctx *ctx, char *ext_family) {
+    int ret;
+    SEXP_t *item;
+
+    __attribute__nonnull__(ctx);
+    __attribute__nonnull__(ext_family);
+
+    item = probe_item_create(
+            OVAL_INDEPENDENT_FAMILY, NULL,
+            "family", OVAL_DATATYPE_STRING, ext_family,
+            NULL);
+    if(item == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    // no need to free the item because probe_item_collect frees it (in almost all cases)
+    ret = probe_item_collect(ctx, item);
+
+fail:
+    return ret;
+}
+
+int family_probe_offline_mode_supported() {
+    return PROBE_OFFLINE_NONE;
+}
+
+int family_probe_main(probe_ctx *ctx, void *arg) {
+    int ret;
+    char *ext_family = NULL;
+    oval_external_probe_eval_funcs_t *eval;
+
+    __attribute__nonnull__(ctx);
+
+    eval = probe_get_external_probe_eval(ctx);
+    if(eval == NULL || eval->family_probe == NULL) {
+        ret = PROBE_EOPNOTSUPP;
+        goto fail;
+    }
+    ext_family = eval->family_probe(eval->probe_ctx);
+    if(ext_family == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ret = collect_family(ctx, ext_family);
+
+fail:
+    free(ext_family);
+
+    return ret;
+}
+
+#endif

@@ -301,7 +301,7 @@ cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_WMI57 "Windows wmi57 probe" ON "EN
 # EXTERNALLY COLLECTED PROBES
 cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE "Independent environmentvariable probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE58 "Independent environmentvariable58 probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
-# cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_FAMILY "Independent family probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_FAMILY "Independent family probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_FILEHASH "Independent filehash probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_FILEHASH58 "Independent filehash58 probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_SQL "Independent sql probe" ON "EXTERNAL_PROBE_COLLECT" OFF)

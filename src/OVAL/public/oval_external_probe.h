@@ -64,9 +64,9 @@ struct oval_external_probe_item_list_iterator;
 typedef struct oval_external_probe_eval_funcs {
     void* probe_ctx;
     bool default_probe_only;    // If true, only call the default probe and ignore specialised probe implementations
-    oval_external_probe_result_t* (*family_probe)(void* probe_ctx, char* probe_id, oval_external_probe_item_t* probe_query);
-    oval_external_probe_result_t* (*environmentvariable_probe)(void* probe_ctx, char* probe_id, oval_external_probe_item_t* probe_query);
-    oval_external_probe_result_t* (*system_info_probe)(void* probe_ctx, char* probe_id, oval_external_probe_item_t* probe_query);
+    char* (*family_probe)(void* probe_ctx);
+    oval_external_probe_item_t* (*system_info_probe)(void* probe_ctx);
+    oval_external_probe_item_t* (*environment_probe)(void* probe_ctx);
     oval_external_probe_result_t* (*default_probe)(void* probe_ctx,oval_subtype_t probe_type, char* probe_id, oval_external_probe_item_t* probe_query);
 } oval_external_probe_eval_funcs_t;
 
@@ -148,10 +148,6 @@ OSCAP_API void oval_external_probe_item_list_free(oval_external_probe_item_list_
  * @memberof oval_external_probe_item_list
  */
 OSCAP_API void oval_external_probe_item_list_push(oval_external_probe_item_list_t* list, oval_external_probe_item_t* item);
-/**
- * @memberof oval_external_probe_item_list
- */
-OSCAP_API int oval_external_probe_item_list_get_length(oval_external_probe_item_list_t* list);
 
 /**
  * @memberof oval_external_probe_result
