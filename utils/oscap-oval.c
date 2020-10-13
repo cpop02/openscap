@@ -398,7 +398,7 @@ static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t *eva
     eval->default_probe = default_external_probe;
     eval->default_probe_only = true;
     eval->system_info_probe = external_system_info_probe;
-    eval->environment_variable_probe = external_environmentvariable_probe;
+    eval->environmentvariable_probe = external_environmentvariable_probe;
 }
 
 #endif

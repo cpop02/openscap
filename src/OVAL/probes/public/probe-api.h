@@ -481,7 +481,8 @@ OSCAP_API int probe_create_external_probe_query(SEXP_t *probe_in, oval_external_
 /**
  * Collects external probe items.
  */
-OSCAP_API int probe_collect_external_probe_items(probe_ctx *ctx,oval_subtype_t type,oval_syschar_status_t status, oval_external_probe_item_list_t *ext_items);
+OSCAP_API int probe_collect_external_probe_items(probe_ctx *ctx, oval_subtype_t type, oval_syschar_status_t status,
+                                                 oval_external_probe_item_list_t *ext_items);
 #endif
 
 typedef struct {

@@ -398,9 +398,75 @@ static int read_environment(SEXP_t *pid_ent, SEXP_t *name_ent, probe_ctx *ctx)
 
 	return err;
 }
+
 #endif
 
 #else // EXTERNAL_PROBE_COLLECT
+
+static inline int collect_variable(SEXP_t *un_ent, probe_ctx *ctx, const char *ext_value_name, oval_external_probe_item_value_t *ext_value_val) {
+    int ret = 0;
+    const char *ext_value_val_cstr;
+    oval_datatype_t ext_value_datatype;
+    SEXP_t *var_name = NULL, *var_val = NULL, *var;
+
+    ext_value_datatype = oval_external_probe_item_value_get_datatype(ext_value_val);
+    if(ext_value_datatype != OVAL_DATATYPE_STRING) {
+        ret = PROBE_EINVAL;
+        goto fail;
+    }
+    ext_value_val_cstr = oval_external_probe_item_value_get_string(ext_value_val);
+    if(ext_value_val_cstr == NULL) {
+        ret = PROBE_EINVAL;
+        goto fail;
+    }
+    var_name = SEXP_string_newf("%s", ext_value_name);
+    if(probe_entobj_cmp(un_ent, var_name) != OVAL_RESULT_TRUE) {
+        goto cleanup;
+    }
+    var_val = SEXP_string_newf("%s", ext_value_val_cstr);
+    var = probe_item_create(
+            OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE58, NULL,
+            "name", OVAL_DATATYPE_SEXP, var_name,
+            "value", OVAL_DATATYPE_SEXP, var_val,
+            NULL);
+    if(var == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    // no need to free the item because probe_item_collect frees it in almost all cases
+    ret = probe_item_collect(ctx, var);
+
+    fail:
+    cleanup:
+    SEXP_free(var_val);
+    SEXP_free(var_name);
+
+    return ret;
+}
+
+static int collect_variables(SEXP_t *un_ent, probe_ctx *ctx, oval_external_probe_item_list_t *ext_items) {
+    int ret = 0;
+    oval_external_probe_item_t *ext_item;
+    const char *ext_item_value_name;
+    oval_external_probe_item_value_t *ext_item_value_val;
+
+    __attribute__nonnull__(ctx);
+    __attribute__nonnull__(ext_items);
+
+    OVAL_EXTERNAL_PROBE_ITEM_LIST_FOREACH(ext_items, ext_item, {
+        OVAL_EXTERNAL_PROBE_ITEM_FOREACH(ext_item, ext_item_value_name, ext_item_value_val, {
+                ret = collect_variable(un_ent, ctx, ext_item_value_name, ext_item_value_val);
+                if(ret != 0) {
+                    break;
+                }
+        })
+        if(ret != 0) {
+            break;
+        }
+    })
+
+    return ret;
+}
 
 static int read_environment(SEXP_t *un_ent, probe_ctx *ctx) {
     int ret;
@@ -415,7 +481,7 @@ static int read_environment(SEXP_t *un_ent, probe_ctx *ctx) {
     __attribute__nonnull__(ctx);
 
     eval = probe_get_external_probe_eval(ctx);
-    if(eval == NULL || eval->environment_variable_probe == NULL) {
+    if(eval == NULL || eval->environmentvariable_probe == NULL) {
         ret = PROBE_EOPNOTSUPP;
         goto fail;
     }
@@ -434,7 +500,7 @@ static int read_environment(SEXP_t *un_ent, probe_ctx *ctx) {
     if(ret != 0) {
         goto fail;
     }
-    ext_res = eval->environment_variable_probe(eval->probe_ctx, str_id, ext_query);
+    ext_res = eval->environmentvariable_probe(eval->probe_ctx, str_id, ext_query);
     if(ext_res == NULL) {
         ret = PROBE_EUNKNOWN;
         goto fail;
@@ -449,9 +515,9 @@ static int read_environment(SEXP_t *un_ent, probe_ctx *ctx) {
         ret = PROBE_EUNKNOWN;
         goto fail;
     }
-    ret = probe_collect_external_probe_items(ctx, OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE58, status, ext_items);
+    ret = collect_variables(un_ent, ctx, ext_items);
 
-    fail:
+fail:
     oval_external_probe_result_free(ext_res);
     oval_external_probe_item_free(ext_query);
     free(str_id);
@@ -471,37 +537,35 @@ int environmentvariable58_probe_offline_mode_supported(void) {
 }
 
 int environmentvariable58_probe_main(probe_ctx *ctx, void *arg) {
-	int pid, err;
-    SEXP_t *probe_in, *name_ent, *pid_ent;
+	int pid, ret = 0;
+    SEXP_t *probe_in, *name_ent = NULL, *pid_ent = NULL;
 
 	probe_in  = probe_ctx_getobject(ctx);
 	name_ent = probe_obj_getent(probe_in, "name", 1);
 	if(name_ent == NULL) {
-		return PROBE_ENOENT;
+	    ret = PROBE_ENOENT;
+	    goto fail;
 	}
-
 	pid_ent = probe_obj_getent(probe_in, "pid", 1);
 	if(pid_ent == NULL) {
-		SEXP_free(name_ent);
-		return PROBE_ENOENT;
+	    ret = PROBE_ENOENT;
+	    goto fail;
 	}
-
 	PROBE_ENT_I32VAL(pid_ent, pid, pid = -1;, pid = 0;);
 	if(pid == -1) {
-		SEXP_free(name_ent);
-		SEXP_free(pid_ent);
-		return PROBE_ERANGE;
+	    ret = PROBE_ERANGE;
+	    goto fail;
 	}
-
 #ifdef EXTERNAL_PROBE_COLLECT
 	if(pid != 0) {
 		// External probe can't collect env vars from other processes
-		err = PROBE_EOPNOTSUPP;
+		ret = PROBE_EOPNOTSUPP;
+		goto fail;
 	} else {
-		err = read_environment(name_ent, ctx);
+		ret = read_environment(name_ent, ctx);
 	}
 #else
-	if (pid == 0) {
+	if(pid == 0) {
 		/* overwrite pid value with actual pid */
 		SEXP_t *nref, *nval, *new_pid_ent;
 
@@ -513,12 +577,12 @@ int environmentvariable58_probe_main(probe_ctx *ctx, void *arg) {
 		SEXP_free(nval);
 		pid_ent = new_pid_ent;
 	}
-
-	err = read_environment(pid_ent, name_ent, ctx);
+	ret = read_environment(pid_ent, name_ent, ctx);
 #endif
 
+fail:
+    SEXP_free(pid_ent);
 	SEXP_free(name_ent);
-	SEXP_free(pid_ent);
 
-	return err;
+	return ret;
 }
