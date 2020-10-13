@@ -114,7 +114,7 @@ static inline int collect_variable(SEXP_t *un_ent, probe_ctx *ctx, const char *e
         ret = PROBE_EUNKNOWN;
         goto fail;
     }
-    // no need to free the item because probe_item_collect frees it in almost all cases
+    // no need to free the item because probe_item_collect frees it (in almost all cases)
     ret = probe_item_collect(ctx, var);
 
 fail:
@@ -126,7 +126,7 @@ cleanup:
 }
 
 static int collect_variables(SEXP_t *un_ent, probe_ctx *ctx, oval_external_probe_item_list_t *ext_items) {
-    int ret = 0;
+    int ret = 0, ext_items_len;
     oval_external_probe_item_t *ext_item;
     const char *ext_item_value_name;
     oval_external_probe_item_value_t *ext_item_value_val;
@@ -134,6 +134,11 @@ static int collect_variables(SEXP_t *un_ent, probe_ctx *ctx, oval_external_probe
     __attribute__nonnull__(ctx);
     __attribute__nonnull__(ext_items);
 
+    ext_items_len = oval_external_probe_item_list_get_length(ext_items);
+    if(ext_items_len != 1) {
+        ret = ext_items_len < 1 ? PROBE_ERANGE : PROBE_EINVAL;
+        goto fail;
+    }
     OVAL_EXTERNAL_PROBE_ITEM_LIST_FOREACH(ext_items, ext_item, {
         OVAL_EXTERNAL_PROBE_ITEM_FOREACH(ext_item, ext_item_value_name, ext_item_value_val, {
             ret = collect_variable(un_ent, ctx, ext_item_value_name, ext_item_value_val);
@@ -146,6 +151,7 @@ static int collect_variables(SEXP_t *un_ent, probe_ctx *ctx, oval_external_probe
         }
     })
 
+fail:
     return ret;
 }
 

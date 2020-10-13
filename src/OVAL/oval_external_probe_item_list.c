@@ -57,22 +57,33 @@ void oval_external_probe_item_list_push(oval_external_probe_item_list_t* list, o
     __attribute__nonnull__(list);
     __attribute__nonnull__(list->items);
     __attribute__nonnull__(item);
+
     oscap_list_push(list->items, item);
+}
+
+int oval_external_probe_item_list_get_length(oval_external_probe_item_list_t* list) {
+    __attribute__nonnull__(list);
+    __attribute__nonnull__(list->items);
+
+    return oscap_list_get_itemcount(list->items);
 }
 
 struct oval_external_probe_item_list_iterator* oval_external_probe_item_list_iterator_new(oval_external_probe_item_list_t* list) {
     __attribute__nonnull__(list);
     __attribute__nonnull__(list->items);
+
     return (struct oval_external_probe_item_list_iterator*)oscap_iterator_new(list->items);
 }
 
 bool oval_external_probe_item_list_iterator_has_more_items(struct oval_external_probe_item_list_iterator* it) {
     __attribute__nonnull__(it);
+
     return oscap_iterator_has_more((struct oscap_iterator*)it);
 }
 
 oval_external_probe_item_t* oval_external_probe_item_list_iterator_next_item(struct oval_external_probe_item_list_iterator* it) {
     __attribute__nonnull__(it);
+
     return (oval_external_probe_item_t*)oscap_iterator_next((struct oscap_iterator*)it);
 }
 

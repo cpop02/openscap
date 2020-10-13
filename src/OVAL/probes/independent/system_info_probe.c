@@ -771,6 +771,92 @@ cleanup:
 
 #else // EXTERNAL_PROBE_COLLECT
 
+static inline int add_system_info(SEXP_t *sys_info, const char* ext_value_name, oval_external_probe_item_value_t* ext_value) {
+    int ret;
+    const char* str_val;
+    bool bool_val;
+    double float_val;
+    long long int_val;
+    void* ptr_val;
+    oval_datatype_t ext_value_datatype;
+
+    __attribute__nonnull__(sys_info);
+    __attribute__nonnull__(ext_value_name);
+    __attribute__nonnull__(ext_value);
+
+    ext_value_datatype = oval_external_probe_item_value_get_datatype(ext_value);
+    switch(ext_value_datatype) {
+        case OVAL_DATATYPE_STRING:
+            str_val = oval_external_probe_item_value_get_string(ext_value);
+            if(str_val == NULL) {
+                ret = EINVAL;
+                goto fail;
+            }
+            ptr_val = &str_val;
+            break;
+        case OVAL_DATATYPE_BOOLEAN:
+            bool_val = oval_external_probe_item_value_get_boolean(ext_value);
+            ptr_val = &bool_val;
+            break;
+        case OVAL_DATATYPE_FLOAT:
+            float_val = oval_external_probe_item_value_get_float(ext_value);
+            ptr_val = &float_val;
+            break;
+        case OVAL_DATATYPE_INTEGER:
+            int_val = oval_external_probe_item_value_get_integer(ext_value);
+            ptr_val = &int_val;
+            break;
+        default:
+            ret = EINVAL;
+            goto fail;
+    }
+    ret = probe_item_add_value(sys_info, ext_value_name, ext_value_datatype, ptr_val);
+
+fail:
+    return ret;
+}
+
+static int collect_system_info(probe_ctx *ctx, oval_external_probe_item_list_t *ext_items) {
+    int ret = 0, ext_items_len;
+    oval_external_probe_item_t *ext_item;
+    const char *ext_item_value_name;
+    oval_external_probe_item_value_t *ext_item_value_val;
+    SEXP_t *sys_info = NULL;
+
+    __attribute__nonnull__(ctx);
+    __attribute__nonnull__(ext_items);
+
+    ext_items_len = oval_external_probe_item_list_get_length(ext_items);
+    if(ext_items_len != 1) {
+        ret = ext_items_len < 1 ? PROBE_ERANGE : PROBE_EINVAL;
+        goto fail;
+    }
+    sys_info = probe_item_create(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, NULL);
+    OVAL_EXTERNAL_PROBE_ITEM_LIST_FOREACH(ext_items, ext_item, {
+        OVAL_EXTERNAL_PROBE_ITEM_FOREACH(ext_item, ext_item_value_name, ext_item_value_val, {
+            ret = add_system_info(sys_info, ext_item_value_name, ext_item_value_val);
+            if(ret != 0) {
+                break;
+            }
+        })
+        if(ret != 0) {
+            break;
+        }
+    })
+    if(ret != 0) {
+        goto fail;
+    }
+    // no need to free the item because probe_item_collect frees it (in almost all cases)
+    ret = probe_item_collect(ctx, sys_info);
+    // avoid double free
+    sys_info = NULL;
+
+fail:
+    SEXP_free(sys_info);
+
+    return ret;
+}
+
 int system_info_probe_offline_mode_supported()
 {
 	return PROBE_OFFLINE_NONE;
@@ -823,9 +909,9 @@ int system_info_probe_main(probe_ctx *ctx, void *arg) {
         ret = PROBE_EUNKNOWN;
         goto fail;
     }
-    ret = probe_collect_external_probe_items(ctx, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, status, ext_items);
+    ret = collect_system_info(ctx, ext_items);
 
-    fail:
+fail:
     oval_external_probe_result_free(ext_res);
     oval_external_probe_item_free(ext_query);
     free(str_id);
