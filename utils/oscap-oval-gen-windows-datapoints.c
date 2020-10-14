@@ -10,159 +10,159 @@
 
 #ifdef EXTERNAL_PROBE_COLLECT
 
-typedef oval_external_probe_value_map_t *(*datapoint_generator_func)(const char *id);
+typedef oval_external_probe_item_t *(*datapoint_generator_func)(const char *id);
 typedef struct datapoint_generator {
     const char*              probe_type_str;
     datapoint_generator_func gen_func;
 } datapoint_generator_t;
 
 
-static oval_external_probe_value_t *generate_oval_sc_EntityItemBoolType(const char *id, const char *field) {
-    return oval_external_probe_value_new_boolean(true);
+static oval_external_probe_item_value_t *generate_oval_sc_EntityItemBoolType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_boolean(true);
 }
     
 
-static oval_external_probe_value_t *generate_oval_sc_EntityItemIntType(const char *id, const char *field) {
-    return oval_external_probe_value_new_integer(1234567);
+static oval_external_probe_item_value_t *generate_oval_sc_EntityItemIntType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_integer(1234567);
 }
     
 
-static oval_external_probe_value_t *generate_oval_sc_EntityItemIPAddressStringType(const char *id, const char *field) {
-    return oval_external_probe_value_new_string("9.8.7.6");
+static oval_external_probe_item_value_t *generate_oval_sc_EntityItemIPAddressStringType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_string("9.8.7.6");
 }
     
 
-static oval_external_probe_value_t *generate_oval_sc_EntityItemStringType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_oval_sc_EntityItemStringType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_oval_sc_EntityItemVersionType(const char *id, const char *field) {
-    return oval_external_probe_value_new_string("9.8.7.6");
+static oval_external_probe_item_value_t *generate_oval_sc_EntityItemVersionType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_string("9.8.7.6");
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemAddrTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemAddrTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemAdstypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemAdstypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemAuditType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemAuditType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemCmdletVerbType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemCmdletVerbType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemDriveTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemDriveTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemFileAttributeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemFileAttributeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemFileTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemFileTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemGUIDType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemGUIDType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemInterfaceTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemInterfaceTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemNamingContextType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemNamingContextType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemNTUserAccountTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemNTUserAccountTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemPeSubsystemType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemPeSubsystemType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemPeTargetMachineType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemPeTargetMachineType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemProtocolType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemProtocolType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemRegistryHiveType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemRegistryHiveType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemRegistryTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemRegistryTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemServiceControlsAcceptedType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemServiceControlsAcceptedType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemServiceCurrentStateType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemServiceCurrentStateType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemServiceStartTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemServiceStartTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemServiceTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemServiceTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemSharedResourceTypeType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemSharedResourceTypeType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemSystemMetricIndexType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemSystemMetricIndexType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemUserRightType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemUserRightType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
 
-static oval_external_probe_value_t *generate_win_sc_EntityItemWindowsViewType(const char *id, const char *field) {
-    return oval_external_probe_value_new_stringf("${%s#%s}", id, field);
+static oval_external_probe_item_value_t *generate_win_sc_EntityItemWindowsViewType(const char *id, const char *field) {
+    return oval_external_probe_item_value_new_stringf("${%s#%s}", id, field);
 }
     
-static oval_external_probe_value_map_t *generate_accesstoken_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_accesstoken_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "security_principle", generate_oval_sc_EntityItemStringType(id, "security_principle"),
         "seassignprimarytokenprivilege", generate_oval_sc_EntityItemBoolType(id, "seassignprimarytokenprivilege"),
         "seauditprivilege", generate_oval_sc_EntityItemBoolType(id, "seauditprivilege"),
@@ -211,8 +211,8 @@ static oval_external_probe_value_map_t *generate_accesstoken_datapoint(const cha
         "setrustedcredmanaccessnameright", generate_oval_sc_EntityItemBoolType(id, "setrustedcredmanaccessnameright"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_activedirectory_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_activedirectory_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "naming_context", generate_win_sc_EntityItemNamingContextType(id, "naming_context"),
         "relative_dn", generate_oval_sc_EntityItemStringType(id, "relative_dn"),
         "attribute", generate_oval_sc_EntityItemStringType(id, "attribute"),
@@ -221,8 +221,8 @@ static oval_external_probe_value_map_t *generate_activedirectory_datapoint(const
         "value", generate_oval_sc_EntityItemStringType(id, "value"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_activedirectory57_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_activedirectory57_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "naming_context", generate_win_sc_EntityItemNamingContextType(id, "naming_context"),
         "relative_dn", generate_oval_sc_EntityItemStringType(id, "relative_dn"),
         "attribute", generate_oval_sc_EntityItemStringType(id, "attribute"),
@@ -231,8 +231,8 @@ static oval_external_probe_value_map_t *generate_activedirectory57_datapoint(con
         "value", generate_oval_sc_EntityItemStringType(id, "value"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_auditeventpolicy_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_auditeventpolicy_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "account_logon", generate_win_sc_EntityItemAuditType(id, "account_logon"),
         "account_management", generate_win_sc_EntityItemAuditType(id, "account_management"),
         "detailed_tracking", generate_win_sc_EntityItemAuditType(id, "detailed_tracking"),
@@ -244,8 +244,8 @@ static oval_external_probe_value_map_t *generate_auditeventpolicy_datapoint(cons
         "system", generate_win_sc_EntityItemAuditType(id, "system"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_auditeventpolicysubcategories_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_auditeventpolicysubcategories_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "credential_validation", generate_win_sc_EntityItemAuditType(id, "credential_validation"),
         "kerberos_authentication_service", generate_win_sc_EntityItemAuditType(id, "kerberos_authentication_service"),
         "kerberos_service_ticket_operations", generate_win_sc_EntityItemAuditType(id, "kerberos_service_ticket_operations"),
@@ -309,8 +309,8 @@ static oval_external_probe_value_map_t *generate_auditeventpolicysubcategories_d
         "audit_detailedtracking_tokenrightadjusted", generate_win_sc_EntityItemAuditType(id, "audit_detailedtracking_tokenrightadjusted"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_cmdlet_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_cmdlet_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "module_name", generate_oval_sc_EntityItemStringType(id, "module_name"),
         "module_id", generate_win_sc_EntityItemGUIDType(id, "module_id"),
         "module_version", generate_oval_sc_EntityItemVersionType(id, "module_version"),
@@ -321,15 +321,15 @@ static oval_external_probe_value_map_t *generate_cmdlet_datapoint(const char *id
         "value", generate_oval_sc_EntityItemStringType(id, "value"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_dnscache_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_dnscache_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "domain_name", generate_oval_sc_EntityItemStringType(id, "domain_name"),
         "ttl", generate_oval_sc_EntityItemIntType(id, "ttl"),
         "ip_address", generate_oval_sc_EntityItemIPAddressStringType(id, "ip_address"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_file_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_file_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "filepath", generate_oval_sc_EntityItemStringType(id, "filepath"),
         "path", generate_oval_sc_EntityItemStringType(id, "path"),
         "filename", generate_oval_sc_EntityItemStringType(id, "filename"),
@@ -352,8 +352,8 @@ static oval_external_probe_value_map_t *generate_file_datapoint(const char *id) 
         "windows_view", generate_win_sc_EntityItemWindowsViewType(id, "windows_view"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_fileauditedpermissions_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_fileauditedpermissions_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "filepath", generate_oval_sc_EntityItemStringType(id, "filepath"),
         "path", generate_oval_sc_EntityItemStringType(id, "path"),
         "filename", generate_oval_sc_EntityItemStringType(id, "filename"),
@@ -381,8 +381,8 @@ static oval_external_probe_value_map_t *generate_fileauditedpermissions_datapoin
         "windows_view", generate_win_sc_EntityItemWindowsViewType(id, "windows_view"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_fileeffectiverights_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_fileeffectiverights_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "filepath", generate_oval_sc_EntityItemStringType(id, "filepath"),
         "path", generate_oval_sc_EntityItemStringType(id, "path"),
         "filename", generate_oval_sc_EntityItemStringType(id, "filename"),
@@ -410,22 +410,22 @@ static oval_external_probe_value_map_t *generate_fileeffectiverights_datapoint(c
         "windows_view", generate_win_sc_EntityItemWindowsViewType(id, "windows_view"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_group_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_group_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "group", generate_oval_sc_EntityItemStringType(id, "group"),
         "user", generate_oval_sc_EntityItemStringType(id, "user"),
         "subgroup", generate_oval_sc_EntityItemStringType(id, "subgroup"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_group_sid_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_group_sid_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "group_sid", generate_oval_sc_EntityItemStringType(id, "group_sid"),
         "user_sid", generate_oval_sc_EntityItemStringType(id, "user_sid"),
         "subgroup_sid", generate_oval_sc_EntityItemStringType(id, "subgroup_sid"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_interface_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_interface_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "name", generate_oval_sc_EntityItemStringType(id, "name"),
         "index", generate_oval_sc_EntityItemIntType(id, "index"),
         "type", generate_win_sc_EntityItemInterfaceTypeType(id, "type"),
@@ -436,30 +436,30 @@ static oval_external_probe_value_map_t *generate_interface_datapoint(const char 
         "addr_type", generate_win_sc_EntityItemAddrTypeType(id, "addr_type"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_junction_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_junction_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "path", generate_oval_sc_EntityItemStringType(id, "path"),
         "canonical_path", generate_oval_sc_EntityItemStringType(id, "canonical_path"),
         "windows_view", generate_win_sc_EntityItemWindowsViewType(id, "windows_view"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_license_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_license_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "name", generate_oval_sc_EntityItemStringType(id, "name"),
         "type", generate_win_sc_EntityItemRegistryTypeType(id, "type"),
         "value", generate_oval_sc_EntityItemStringType(id, "value"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_lockoutpolicy_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_lockoutpolicy_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "force_logoff", generate_oval_sc_EntityItemIntType(id, "force_logoff"),
         "lockout_duration", generate_oval_sc_EntityItemIntType(id, "lockout_duration"),
         "lockout_observation_window", generate_oval_sc_EntityItemIntType(id, "lockout_observation_window"),
         "lockout_threshold", generate_oval_sc_EntityItemIntType(id, "lockout_threshold"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_metabase_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_metabase_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "key", generate_oval_sc_EntityItemStringType(id, "key"),
         "id", generate_oval_sc_EntityItemIntType(id, "id"),
         "name", generate_oval_sc_EntityItemStringType(id, "name"),
@@ -468,8 +468,8 @@ static oval_external_probe_value_map_t *generate_metabase_datapoint(const char *
         "data", generate_oval_sc_EntityItemStringType(id, "data"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_ntuser_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_ntuser_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "key", generate_oval_sc_EntityItemStringType(id, "key"),
         "name", generate_oval_sc_EntityItemStringType(id, "name"),
         "sid", generate_oval_sc_EntityItemStringType(id, "sid"),
@@ -485,8 +485,8 @@ static oval_external_probe_value_map_t *generate_ntuser_datapoint(const char *id
         "value", generate_oval_sc_EntityItemStringType(id, "value"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_passwordpolicy_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_passwordpolicy_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "max_passwd_age", generate_oval_sc_EntityItemIntType(id, "max_passwd_age"),
         "min_passwd_age", generate_oval_sc_EntityItemIntType(id, "min_passwd_age"),
         "min_passwd_len", generate_oval_sc_EntityItemIntType(id, "min_passwd_len"),
@@ -496,8 +496,8 @@ static oval_external_probe_value_map_t *generate_passwordpolicy_datapoint(const 
         "anonymous_name_lookup", generate_oval_sc_EntityItemBoolType(id, "anonymous_name_lookup"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_peheader_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_peheader_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "filepath", generate_oval_sc_EntityItemStringType(id, "filepath"),
         "path", generate_oval_sc_EntityItemStringType(id, "path"),
         "filename", generate_oval_sc_EntityItemStringType(id, "filename"),
@@ -556,8 +556,8 @@ static oval_external_probe_value_map_t *generate_peheader_datapoint(const char *
         "windows_view", generate_win_sc_EntityItemWindowsViewType(id, "windows_view"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_port_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_port_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "local_address", generate_oval_sc_EntityItemIPAddressStringType(id, "local_address"),
         "local_port", generate_oval_sc_EntityItemIntType(id, "local_port"),
         "protocol", generate_win_sc_EntityItemProtocolType(id, "protocol"),
@@ -566,8 +566,8 @@ static oval_external_probe_value_map_t *generate_port_datapoint(const char *id) 
         "foreign_port", generate_oval_sc_EntityItemStringType(id, "foreign_port"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_printereffectiverights_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_printereffectiverights_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "printer_name", generate_oval_sc_EntityItemStringType(id, "printer_name"),
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
         "standard_delete", generate_oval_sc_EntityItemBoolType(id, "standard_delete"),
@@ -586,8 +586,8 @@ static oval_external_probe_value_map_t *generate_printereffectiverights_datapoin
         "job_access_read", generate_oval_sc_EntityItemBoolType(id, "job_access_read"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_process_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_process_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "command_line", generate_oval_sc_EntityItemStringType(id, "command_line"),
         "pid", generate_oval_sc_EntityItemIntType(id, "pid"),
         "ppid", generate_oval_sc_EntityItemIntType(id, "ppid"),
@@ -600,8 +600,8 @@ static oval_external_probe_value_map_t *generate_process_datapoint(const char *i
         "name", generate_oval_sc_EntityItemStringType(id, "name"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_registry_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_registry_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "hive", generate_win_sc_EntityItemRegistryHiveType(id, "hive"),
         "key", generate_oval_sc_EntityItemStringType(id, "key"),
         "name", generate_oval_sc_EntityItemStringType(id, "name"),
@@ -612,8 +612,8 @@ static oval_external_probe_value_map_t *generate_registry_datapoint(const char *
         "windows_view", generate_win_sc_EntityItemWindowsViewType(id, "windows_view"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_regkeyauditedpermissions_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_regkeyauditedpermissions_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "hive", generate_win_sc_EntityItemRegistryHiveType(id, "hive"),
         "key", generate_oval_sc_EntityItemStringType(id, "key"),
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
@@ -640,8 +640,8 @@ static oval_external_probe_value_map_t *generate_regkeyauditedpermissions_datapo
         "windows_view", generate_win_sc_EntityItemWindowsViewType(id, "windows_view"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_regkeyeffectiverights_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_regkeyeffectiverights_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "hive", generate_win_sc_EntityItemRegistryHiveType(id, "hive"),
         "key", generate_oval_sc_EntityItemStringType(id, "key"),
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
@@ -668,8 +668,8 @@ static oval_external_probe_value_map_t *generate_regkeyeffectiverights_datapoint
         "windows_view", generate_win_sc_EntityItemWindowsViewType(id, "windows_view"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_service_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_service_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "service_name", generate_oval_sc_EntityItemStringType(id, "service_name"),
         "display_name", generate_oval_sc_EntityItemStringType(id, "display_name"),
         "description", generate_oval_sc_EntityItemStringType(id, "description"),
@@ -684,8 +684,8 @@ static oval_external_probe_value_map_t *generate_service_datapoint(const char *i
         "dependencies", generate_oval_sc_EntityItemStringType(id, "dependencies"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_serviceeffectiverights_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_serviceeffectiverights_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "service_name", generate_oval_sc_EntityItemStringType(id, "service_name"),
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
         "standard_delete", generate_oval_sc_EntityItemBoolType(id, "standard_delete"),
@@ -706,8 +706,8 @@ static oval_external_probe_value_map_t *generate_serviceeffectiverights_datapoin
         "service_user_defined", generate_oval_sc_EntityItemBoolType(id, "service_user_defined"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_sharedresource_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_sharedresource_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "netname", generate_oval_sc_EntityItemStringType(id, "netname"),
         "shared_type", generate_win_sc_EntityItemSharedResourceTypeType(id, "shared_type"),
         "max_uses", generate_oval_sc_EntityItemIntType(id, "max_uses"),
@@ -723,8 +723,8 @@ static oval_external_probe_value_map_t *generate_sharedresource_datapoint(const 
         "access_all_permission", generate_oval_sc_EntityItemBoolType(id, "access_all_permission"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_sharedresourceauditedpermissions_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_sharedresourceauditedpermissions_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "netname", generate_oval_sc_EntityItemStringType(id, "netname"),
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
         "standard_delete", generate_win_sc_EntityItemAuditType(id, "standard_delete"),
@@ -739,8 +739,8 @@ static oval_external_probe_value_map_t *generate_sharedresourceauditedpermission
         "generic_all", generate_win_sc_EntityItemAuditType(id, "generic_all"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_sharedresourceeffectiverights_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_sharedresourceeffectiverights_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "netname", generate_oval_sc_EntityItemStringType(id, "netname"),
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
         "standard_delete", generate_oval_sc_EntityItemBoolType(id, "standard_delete"),
@@ -755,28 +755,28 @@ static oval_external_probe_value_map_t *generate_sharedresourceeffectiverights_d
         "generic_all", generate_oval_sc_EntityItemBoolType(id, "generic_all"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_sid_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_sid_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "trustee_name", generate_oval_sc_EntityItemStringType(id, "trustee_name"),
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
         "trustee_domain", generate_oval_sc_EntityItemStringType(id, "trustee_domain"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_sid_sid_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_sid_sid_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
         "trustee_name", generate_oval_sc_EntityItemStringType(id, "trustee_name"),
         "trustee_domain", generate_oval_sc_EntityItemStringType(id, "trustee_domain"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_systemmetric_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_systemmetric_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "index", generate_win_sc_EntityItemSystemMetricIndexType(id, "index"),
         "value", generate_oval_sc_EntityItemIntType(id, "value"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_uac_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_uac_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "admin_approval_mode", generate_oval_sc_EntityItemBoolType(id, "admin_approval_mode"),
         "elevation_prompt_admin", generate_oval_sc_EntityItemStringType(id, "elevation_prompt_admin"),
         "elevation_prompt_standard", generate_oval_sc_EntityItemStringType(id, "elevation_prompt_standard"),
@@ -788,8 +788,8 @@ static oval_external_probe_value_map_t *generate_uac_datapoint(const char *id) {
         "virtualize_write_failures", generate_oval_sc_EntityItemBoolType(id, "virtualize_write_failures"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_user_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_user_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "user", generate_oval_sc_EntityItemStringType(id, "user"),
         "enabled", generate_oval_sc_EntityItemBoolType(id, "enabled"),
         "group", generate_oval_sc_EntityItemStringType(id, "group"),
@@ -810,23 +810,23 @@ static oval_external_probe_value_map_t *generate_user_datapoint(const char *id) 
         "trusted_to_authenticate_for_delegation", generate_oval_sc_EntityItemBoolType(id, "trusted_to_authenticate_for_delegation"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_user_sid_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_user_sid_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "user_sid", generate_oval_sc_EntityItemStringType(id, "user_sid"),
         "enabled", generate_oval_sc_EntityItemBoolType(id, "enabled"),
         "group_sid", generate_oval_sc_EntityItemStringType(id, "group_sid"),
         "last_logon", generate_oval_sc_EntityItemIntType(id, "last_logon"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_userright_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_userright_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "userright", generate_win_sc_EntityItemUserRightType(id, "userright"),
         "trustee_name", generate_oval_sc_EntityItemStringType(id, "trustee_name"),
         "trustee_sid", generate_oval_sc_EntityItemStringType(id, "trustee_sid"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_volume_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_volume_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "rootpath", generate_oval_sc_EntityItemStringType(id, "rootpath"),
         "file_system", generate_oval_sc_EntityItemStringType(id, "file_system"),
         "name", generate_oval_sc_EntityItemStringType(id, "name"),
@@ -855,22 +855,22 @@ static oval_external_probe_value_map_t *generate_volume_datapoint(const char *id
         "file_supports_usn_journal", generate_oval_sc_EntityItemBoolType(id, "file_supports_usn_journal"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_wmi_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_wmi_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "namespace", generate_oval_sc_EntityItemStringType(id, "namespace"),
         "wql", generate_oval_sc_EntityItemStringType(id, "wql"),
         "result", generate_oval_sc_EntityItemStringType(id, "result"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_wmi57_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_wmi57_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "namespace", generate_oval_sc_EntityItemStringType(id, "namespace"),
         "wql", generate_oval_sc_EntityItemStringType(id, "wql"),
         "result", generate_oval_sc_EntityItemStringType(id, "result"),
         NULL);
 }
-static oval_external_probe_value_map_t *generate_wuaupdatesearcher_datapoint(const char *id) {
-    return oval_external_probe_value_map_new(
+static oval_external_probe_item_t *generate_wuaupdatesearcher_datapoint(const char *id) {
+    return oval_external_probe_item_new(
         "search_criteria", generate_oval_sc_EntityItemStringType(id, "search_criteria"),
         "update_id", generate_oval_sc_EntityItemStringType(id, "update_id"),
         NULL);
@@ -921,7 +921,7 @@ static datapoint_generator_t datapoint_generators[] = {
 };
 #define datapoint_generators_count 42
 
-oval_external_probe_value_map_t *generate_windows_probe_datapoints(oval_subtype_t probe_type, const char *id) {
+oval_external_probe_item_t *generate_windows_probe_datapoints(oval_subtype_t probe_type, const char *id) {
     const char *probe_type_str = oval_subtype_get_text(probe_type);
     if (probe_type_str == NULL) {
         return NULL;

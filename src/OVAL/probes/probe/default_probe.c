@@ -4,167 +4,67 @@
 
 #include <OVAL/probes/SEAP/public/sexp.h>
 #include <common/debug_priv.h>
+#include <oval_external_probe.h>
 #include "default_probe.h"
 
 #ifdef EXTERNAL_PROBE_COLLECT
 
-static oval_external_probe_value_map_t *extract_probe_ents(SEXP_t *probe_in)
-{
-    SEXP_t *objents, *ent, *ent_name;
+int default_probe_main(probe_ctx *ctx, oval_subtype_t type) {
+    int ret;
+    char *str_id = NULL;
+    SEXP_t *in, *id = NULL;
+    oval_syschar_status_t status;
+    oval_external_probe_eval_funcs_t *eval;
+    oval_external_probe_item_t *ext_query = NULL;
+    oval_external_probe_result_t *ext_res = NULL;
+    oval_external_probe_item_list_t *ext_items;
 
-    ent = NULL;
-    objents = SEXP_list_rest(probe_in);
-    oval_external_probe_value_map_t *values = oval_external_probe_value_map_new(NULL, NULL);
+    __attribute__nonnull__(ctx);
 
-    SEXP_list_foreach(ent, objents) {
-        ent_name = SEXP_list_first(ent);
-
-        if (SEXP_listp(ent_name)) {
-            SEXP_t *nr;
-
-            nr = SEXP_list_first(ent_name);
-            SEXP_free(ent_name);
-            ent_name = nr;
-        }
-
-        if (SEXP_stringp(ent_name)) {
-            SEXP_t *sval = probe_ent_getval(ent);
-            oval_external_probe_value_t *val = NULL;
-
-            if (SEXP_numberp(sval)) {
-                switch (SEXP_number_type(sval)) {
-                    case SEXP_NUM_BOOL:
-                        val = oval_external_probe_value_new_boolean(SEXP_number_getb(sval));
-                        break;
-                    case SEXP_NUM_INT8:
-                    case SEXP_NUM_UINT8:
-                    case SEXP_NUM_INT16:
-                    case SEXP_NUM_UINT16:
-                    case SEXP_NUM_INT32:
-                    case SEXP_NUM_UINT32:
-                    case SEXP_NUM_INT64:
-                    case SEXP_NUM_UINT64:
-                        val = oval_external_probe_value_new_integer(SEXP_number_geti_64(sval));
-                        break;
-                    case SEXP_NUM_DOUBLE:
-                        val = oval_external_probe_value_new_float(SEXP_number_getf(sval));
-                        break;
-                    default:
-                        dW("Skipping SEXP number type %d", SEXP_number_type(sval));
-                }
-            } else if (SEXP_stringp(sval)) {
-                char *str = SEXP_string_cstr(sval);
-                val = oval_external_probe_value_new_string(str);
-                free(str);
-            } else {
-                dW("Skipping unknown/unsupported SEXP type %s", SEXP_datatype(sval));
-            }
-
-            SEXP_free(sval);
-
-            if (val != NULL) {
-                char name[1024];
-                SEXP_string_cstr_r(ent_name, name, sizeof(name));
-
-                oval_external_probe_value_map_set(values, name, val);
-            }
-        }
-
-        SEXP_free(ent_name);
+    eval = probe_get_external_probe_eval(ctx);
+    if(eval == NULL || eval->default_probe == NULL) {
+        ret = PROBE_EOPNOTSUPP;
+        goto fail;
     }
-
-    SEXP_free(objents);
-    return values;
-}
-
-int default_probe_main(probe_ctx *ctx, oval_subtype_t probe_type)
-{
-    oval_external_probe_eval_funcs_t *eval = probe_get_external_probe_eval(ctx);
-    if (eval == NULL || eval->default_probe == NULL)
-        return PROBE_EOPNOTSUPP;
-
-    SEXP_t *probe_in = probe_ctx_getobject(ctx);
-
-    SEXP_t *oid = NULL;
-    oval_external_probe_result_t *res = NULL;
-
-    oid = probe_obj_getattrval(probe_in, "id");
-    if (oid == NULL)
-        return PROBE_ENOVAL;
-
-    int err = PROBE_ENOVAL;
-
-    char *id = SEXP_string_cstr(oid);
-    oval_external_probe_value_map_t *probe_ents = extract_probe_ents(probe_in);
-
-    res = eval->default_probe(eval->probe_ctx, probe_type, id, probe_ents);
-
-    oval_external_probe_value_map_free(probe_ents);
-    free(id);
-
-    if (res == NULL) {
-        goto cleanup;
+    in = probe_ctx_getobject(ctx);
+    id = probe_obj_getattrval(in, "id");
+    if(id == NULL) {
+        ret = PROBE_ENOVAL;
+        goto fail;
     }
-
-    oval_syschar_status_t status = oval_external_probe_result_get_status(res);
-    if (status == SYSCHAR_STATUS_ERROR) {
-        err = PROBE_EUNKNOWN;
-        goto cleanup;
+    str_id = SEXP_string_cstr(id);
+    if(str_id == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
     }
+    ret = probe_create_external_probe_query(in, &ext_query);
+    if(ret != 0) {
+        goto fail;
+    }
+    ext_res = eval->default_probe(eval->probe_ctx, type, str_id, ext_query);
+    if(ext_res == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    status = oval_external_probe_result_get_status(ext_res);
+    if(status == SYSCHAR_STATUS_ERROR) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ext_items = oval_external_probe_result_get_items(ext_res);
+    if(ext_items == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ret = probe_collect_external_probe_items(ctx, type, status, ext_items);
 
-    SEXP_t *item = probe_item_create(probe_type, NULL, NULL);
+fail:
+    oval_external_probe_result_free(ext_res);
+    oval_external_probe_item_free(ext_query);
+    free(str_id);
+    SEXP_free(id);
 
-    const char *value_str;
-    int64_t value_int;
-    double value_flt;
-    bool value_bool;
-
-    const char *name;
-    oval_external_probe_value_t *val;
-    oval_external_probe_value_map_t *res_fields = oval_external_probe_result_get_fields(res);
-    OVAL_EXTERNAL_PROBE_VALUE_MAP_FOREACH(res_fields, name, val, {
-        oval_datatype_t value_type = oval_external_probe_value_get_datatype(val);
-        void *pvalue = NULL;
-        err = 0;
-
-        switch (value_type) {
-            case OVAL_DATATYPE_BOOLEAN:
-                value_bool = oval_external_probe_value_get_boolean(val);
-                pvalue = &value_bool;
-                break;
-            case OVAL_DATATYPE_FLOAT:
-                value_flt = oval_external_probe_value_get_float(val);
-                pvalue = &value_flt;
-                break;
-            case OVAL_DATATYPE_INTEGER:
-                value_int = oval_external_probe_value_get_integer(val);
-                pvalue = &value_int;
-                break;
-            case OVAL_DATATYPE_STRING:
-                value_str = oval_external_probe_value_get_string(val);
-                pvalue = &value_str;
-                break;
-            default:
-                err = PROBE_EINVAL;
-        }
-
-        if (err == 0)
-            err = probe_item_add_value(item, name, value_type, pvalue);
-        if (err != 0)
-            break;
-    })
-
-    if (err == 0) {
-        probe_ent_setstatus(item, status);
-        probe_item_collect(ctx, item);
-    } else
-        SEXP_free(item);
-
-cleanup:
-    oval_external_probe_result_free(res);
-    SEXP_free(oid);
-
-    return err;
+    return ret;
 }
 
 #endif

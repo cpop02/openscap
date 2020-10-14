@@ -776,67 +776,62 @@ int system_info_probe_offline_mode_supported()
 	return PROBE_OFFLINE_NONE;
 }
 
-int system_info_probe_main(probe_ctx *ctx, void *arg)
-{
-	oval_external_probe_eval_funcs_t* eval = probe_get_external_probe_eval(ctx);
-    if (eval == NULL || eval->system_info_probe == NULL)
-		return PROBE_EOPNOTSUPP;
+int system_info_probe_main(probe_ctx *ctx, void *arg) {
+    int ret;
+    char *str_id = NULL;
+    SEXP_t *in, *id = NULL;
+    oval_syschar_status_t status;
+    oval_external_probe_eval_funcs_t *eval;
+    oval_external_probe_item_t *ext_query = NULL;
+    oval_external_probe_result_t *ext_res = NULL;
+    oval_external_probe_item_list_t *ext_items;
 
-	const char unknown[] = "Unknown";
-	const char *os_name, *architecture, *hname, *os_version;
-    SEXP_t* oid = NULL;
-	SEXP_t *item = NULL;
-    oval_external_probe_result_t* res = NULL;
-	int err = PROBE_ENOVAL;
+    __attribute__nonnull__(ctx);
 
-	SEXP_t *probe_in = probe_ctx_getobject(ctx);
+    eval = probe_get_external_probe_eval(ctx);
+    if(eval == NULL || eval->system_info_probe == NULL) {
+        ret = PROBE_EOPNOTSUPP;
+        goto fail;
+    }
+    in = probe_ctx_getobject(ctx);
+    id = probe_obj_getattrval(in, "id");
+    if(id == NULL) {
+        ret = PROBE_ENOVAL;
+        goto fail;
+    }
+    str_id = SEXP_string_cstr(id);
+    if(str_id == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ret = probe_create_external_probe_query(in, &ext_query);
+    if(ret != 0) {
+        goto fail;
+    }
+    ext_res = eval->system_info_probe(eval->probe_ctx, str_id, ext_query);
+    if(ext_res == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    status = oval_external_probe_result_get_status(ext_res);
+    if(status == SYSCHAR_STATUS_ERROR) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ext_items = oval_external_probe_result_get_items(ext_res);
+    if(ext_items == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ret = probe_collect_external_probe_items(ctx, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, status, ext_items);
 
-    oid = probe_obj_getattrval(probe_in, "id");
-	if (oid == NULL)
-		goto cleanup;
+    fail:
+    oval_external_probe_result_free(ext_res);
+    oval_external_probe_item_free(ext_query);
+    free(str_id);
+    SEXP_free(id);
 
-	char *id = SEXP_string_cstr(oid);
-	res = eval->system_info_probe(eval->probe_ctx, id);
-	free(id);
-
-	if (res == NULL) {
-		goto cleanup;
-	}
-
-	err = oval_external_probe_result_get_status(res);
-	if (err != 0)
-		goto cleanup;
-
-	/* All four elements are required */
-	os_name = oval_external_probe_result_get_field_string(res, "os_name");
-	if (!os_name)
-		os_name = unknown;
-
-	os_version = oval_external_probe_result_get_field_string(res, "os_version");
-	if (!os_version)
-		os_version = strdup(unknown);
-
-	architecture = oval_external_probe_result_get_field_string(res, "os_architecture");
-	if (!architecture)
-		architecture = unknown;
-
-	hname = oval_external_probe_result_get_field_string(res, "primary_host_name");
-	if (!hname)
-		hname = unknown;
-
-	item = probe_item_create(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, NULL,
-	                         "os_name",           OVAL_DATATYPE_STRING, os_name,
-	                         "os_version",        OVAL_DATATYPE_STRING, os_version,
-	                         "os_architecture",   OVAL_DATATYPE_STRING, architecture,
-	                         "primary_host_name", OVAL_DATATYPE_STRING, hname,
-	                         NULL);
-	probe_item_collect(ctx, item);
-
-cleanup:
-	oval_external_probe_result_free(res);
-	SEXP_free(oid);
-
-	return err;
+    return ret;
 }
 
 #endif // EXTERNAL_PROBE_COLLECT

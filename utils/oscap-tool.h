@@ -213,7 +213,7 @@ int evaluate_suffix_match_result_with_custom_reports(int suffix_match_result, co
 int evaluate_suffix_match_result(int suffix_match_result, const char *profile_suffix, const char *source_file);
 
 #ifdef EXTERNAL_PROBE_COLLECT
-oval_external_probe_value_map_t *generate_windows_probe_datapoints(oval_subtype_t probe_type, const char *id);
+oval_external_probe_item_t *generate_windows_probe_datapoints(oval_subtype_t probe_type, const char *id);
 #endif
 
 extern struct oscap_module OSCAP_ROOT_MODULE;

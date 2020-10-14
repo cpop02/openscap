@@ -84,88 +84,77 @@ static int read_environment(SEXP_t *un_ent, probe_ctx *ctx)
 
 #else // EXTERNAL_PROBE_COLLECT
 
-static int extract_matching_env_keys(SEXP_t* un_ent, probe_ctx* ctx, oval_external_probe_value_map_t* env_vals) {
-    int err = 0;
-    SEXP_t *env_name, *env_value, *item;
+static int read_environment(SEXP_t *un_ent, probe_ctx *ctx) {
+    int ret;
+    char *str_id = NULL;
+    SEXP_t *in, *id = NULL;
+    oval_syschar_status_t status;
+    oval_external_probe_eval_funcs_t *eval;
+    oval_external_probe_item_t *ext_query = NULL;
+    oval_external_probe_result_t *ext_res = NULL;
+    oval_external_probe_item_list_t *ext_items;
 
-    if (env_vals == NULL)
-        return 0;
+    __attribute__nonnull__(ctx);
 
-    const char* name;
-    oval_external_probe_value_t* val;
-    OVAL_EXTERNAL_PROBE_VALUE_MAP_FOREACH(env_vals, name, val, {
-        if (oval_external_probe_value_get_datatype(val) != OVAL_DATATYPE_STRING) {
-            err = PROBE_EINVAL;
-            break;
-        }
+    eval = probe_get_external_probe_eval(ctx);
+    if(eval == NULL || eval->environment_variable_probe == NULL) {
+        ret = PROBE_EOPNOTSUPP;
+        goto fail;
+    }
+    in = probe_ctx_getobject(ctx);
+    id = probe_obj_getattrval(in, "id");
+    if(id == NULL) {
+        ret = PROBE_ENOVAL;
+        goto fail;
+    }
+    str_id = SEXP_string_cstr(id);
+    if(str_id == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ret = probe_create_external_probe_query(in, &ext_query);
+    if(ret != 0) {
+        goto fail;
+    }
+    ext_res = eval->environment_variable_probe(eval->probe_ctx, str_id, ext_query);
+    if(ext_res == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    status = oval_external_probe_result_get_status(ext_res);
+    if(status == SYSCHAR_STATUS_ERROR) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ext_items = oval_external_probe_result_get_items(ext_res);
+    if(ext_items == NULL) {
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    ret = probe_collect_external_probe_items(ctx, OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE, status, ext_items);
 
-        env_name = SEXP_string_newf("%s", name);
-        env_value = SEXP_string_newf("%s", oval_external_probe_value_get_string(val));
-        if (probe_entobj_cmp(un_ent, env_name) == OVAL_RESULT_TRUE) {
-            dI("EXTPROBE: environmentvariable: matched env_name=%s, value=%s", name, val);
-            item = probe_item_create(OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE, NULL, "name", OVAL_DATATYPE_SEXP, env_name, "value", OVAL_DATATYPE_SEXP,
-                                     env_value, NULL);
-            probe_item_collect(ctx, item);
-        }
-        SEXP_free(env_name);
-        SEXP_free(env_value);
-    })
+fail:
+    oval_external_probe_result_free(ext_res);
+    oval_external_probe_item_free(ext_query);
+    free(str_id);
+    SEXP_free(id);
 
-    return err;
-}
-
-static int read_environment(SEXP_t *un_ent, probe_ctx *ctx)
-{
-    oval_external_probe_eval_funcs_t* eval = probe_get_external_probe_eval(ctx);
-    if (eval == NULL || eval->environmentvariable_probe == NULL)
-		return PROBE_EOPNOTSUPP;
-
-	SEXP_t *probe_in = probe_ctx_getobject(ctx);
-    SEXP_t* oid = NULL;
-    oval_external_probe_result_t* res = NULL;
-	int err = PROBE_ENOVAL;
-
-    oid = probe_obj_getattrval(probe_in, "id");
-	if (oid == NULL)
-		goto cleanup;
-
-	char *id = SEXP_string_cstr(oid);
-	res = eval->environmentvariable_probe(eval->probe_ctx, id);
-	free(id);
-
-	if (res == NULL) {
-		goto cleanup;
-	}
-
-	err = oval_external_probe_result_get_status(res);
-	if (err != 0)
-		goto cleanup;
-
-	err = extract_matching_env_keys(un_ent, ctx, oval_external_probe_result_get_fields(res));
-
-cleanup:
-	oval_external_probe_result_free(res);
-	SEXP_free(oid);
-
-	return err;
+    return ret;
 }
 
 #endif // EXTERNAL_PROBE_COLLECT
 
-int environmentvariable_probe_main(probe_ctx *ctx, void *arg)
-{
-	SEXP_t *probe_in, *ent;
-	int res;
+int environmentvariable_probe_main(probe_ctx *ctx, void *arg) {
+	int ret;
+    SEXP_t *probe_in, *ent;
 
 	probe_in  = probe_ctx_getobject(ctx);
 	ent = probe_obj_getent(probe_in, "name", 1);
-
-	if (ent == NULL) {
+	if(ent == NULL) {
 		return PROBE_ENOVAL;
 	}
-
-	res = read_environment(ent, ctx);
+	ret = read_environment(ent, ctx);
 	SEXP_free(ent);
 
-	return res;
+	return ret;
 }

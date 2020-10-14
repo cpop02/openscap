@@ -20,7 +20,7 @@ set (OVAL_SOURCES
     "oval_entity.c"
     "oval_enumerations.c"
     "oval_external_probe_result.c"
-    "oval_external_probe_value.c"
+    "oval_external_probe_item.c"
     "oval_filter.c"
     "oval_generator.c"
     "oval_glob_to_regex.c"
@@ -52,7 +52,7 @@ set (OVAL_SOURCES
     "oval_sys_parser.c"
     "oval_varModel.c"
     "oval_vardefMapping.c"
-)
+		oval_external_probe_item_list.c)
 
 if (ENABLE_PROBES)
     list(APPEND OVAL_SOURCES
