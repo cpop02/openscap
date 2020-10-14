@@ -41,9 +41,6 @@
 #include <config.h>
 #endif
 
-#include "probe-common.h"
-#include "probes/probe/probe.h"
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
@@ -55,15 +52,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include <probe/probe.h>
-#include "_seap.h"
-#include "probe-api.h"
-#include "probe/entcmp.h"
-#include "common/debug_priv.h"
-#include "environmentvariable58_probe.h"
-
-#ifndef EXTERNAL_PROBE_COLLECT
-
 #if defined(OS_FREEBSD)
 #include <limits.h>
 #include <sys/user.h>
@@ -72,7 +60,16 @@
 #include <paths.h>
 #include <libprocstat.h>
 #include <sys/sysctl.h>
+#endif
 
+#include <probe/probe.h>
+#include "_seap.h"
+#include "probe-api.h"
+#include "probe/entcmp.h"
+#include "common/debug_priv.h"
+#include "environmentvariable58_probe.h"
+
+#if defined(OS_FREEBSD)
 static int read_environment(SEXP_t *pid_ent, SEXP_t *name_ent, probe_ctx *ctx)
 {
 	struct kinfo_proc *proclist, *proc;
@@ -400,107 +397,37 @@ static int read_environment(SEXP_t *pid_ent, SEXP_t *name_ent, probe_ctx *ctx)
 }
 #endif
 
-#else // EXTERNAL_PROBE_COLLECT
-
-static int read_environment(SEXP_t *un_ent, probe_ctx *ctx) {
-    int ret;
-    char *str_id = NULL;
-    SEXP_t *in, *id = NULL;
-    oval_syschar_status_t status;
-    oval_external_probe_eval_funcs_t *eval;
-    oval_external_probe_item_t *ext_query = NULL;
-    oval_external_probe_result_t *ext_res = NULL;
-    oval_external_probe_item_list_t *ext_items;
-
-    __attribute__nonnull__(ctx);
-
-    eval = probe_get_external_probe_eval(ctx);
-    if(eval == NULL || eval->environment_variable_probe == NULL) {
-        ret = PROBE_EOPNOTSUPP;
-        goto fail;
-    }
-    in = probe_ctx_getobject(ctx);
-    id = probe_obj_getattrval(in, "id");
-    if(id == NULL) {
-        ret = PROBE_ENOVAL;
-        goto fail;
-    }
-    str_id = SEXP_string_cstr(id);
-    if(str_id == NULL) {
-        ret = PROBE_EUNKNOWN;
-        goto fail;
-    }
-    ret = probe_create_external_probe_query(in, &ext_query);
-    if(ret != 0) {
-        goto fail;
-    }
-    ext_res = eval->environment_variable_probe(eval->probe_ctx, str_id, ext_query);
-    if(ext_res == NULL) {
-        ret = PROBE_EUNKNOWN;
-        goto fail;
-    }
-    status = oval_external_probe_result_get_status(ext_res);
-    if(status == SYSCHAR_STATUS_ERROR) {
-        ret = PROBE_EUNKNOWN;
-        goto fail;
-    }
-    ext_items = oval_external_probe_result_get_items(ext_res);
-    if(ext_items == NULL) {
-        ret = PROBE_EUNKNOWN;
-        goto fail;
-    }
-    ret = probe_collect_external_probe_items(ctx, OVAL_INDEPENDENT_ENVIRONMENT_VARIABLE58, status, ext_items);
-
-    fail:
-    oval_external_probe_result_free(ext_res);
-    oval_external_probe_item_free(ext_query);
-    free(str_id);
-    SEXP_free(id);
-
-    return ret;
-}
-
-#endif //EXTERNAL_PROBE_COLLECT
-
-int environmentvariable58_probe_offline_mode_supported(void) {
-#ifdef EXTERNAL_PROBE_COLLECT
-	return PROBE_OFFLINE_NONE;
-#else
+int environmentvariable58_probe_offline_mode_supported(void)
+{
 	return PROBE_OFFLINE_OWN;
-#endif
 }
 
-int environmentvariable58_probe_main(probe_ctx *ctx, void *arg) {
+int environmentvariable58_probe_main(probe_ctx *ctx, void *arg)
+{
+	SEXP_t *probe_in, *name_ent, *pid_ent;
 	int pid, err;
-    SEXP_t *probe_in, *name_ent, *pid_ent;
 
 	probe_in  = probe_ctx_getobject(ctx);
 	name_ent = probe_obj_getent(probe_in, "name", 1);
-	if(name_ent == NULL) {
+
+	if (name_ent == NULL) {
 		return PROBE_ENOENT;
 	}
 
 	pid_ent = probe_obj_getent(probe_in, "pid", 1);
-	if(pid_ent == NULL) {
+	if (pid_ent == NULL) {
 		SEXP_free(name_ent);
 		return PROBE_ENOENT;
 	}
 
 	PROBE_ENT_I32VAL(pid_ent, pid, pid = -1;, pid = 0;);
-	if(pid == -1) {
+
+	if (pid == -1) {
 		SEXP_free(name_ent);
 		SEXP_free(pid_ent);
 		return PROBE_ERANGE;
 	}
 
-#ifdef EXTERNAL_PROBE_COLLECT
-	if(pid != 0) {
-		// External probe can't collect env vars from other processes
-		err = PROBE_EOPNOTSUPP;
-	} else {
-		err = read_environment(name_ent, ctx);
-	}
-#else
 	if (pid == 0) {
 		/* overwrite pid value with actual pid */
 		SEXP_t *nref, *nval, *new_pid_ent;
@@ -515,7 +442,6 @@ int environmentvariable58_probe_main(probe_ctx *ctx, void *arg) {
 	}
 
 	err = read_environment(pid_ent, name_ent, ctx);
-#endif
 
 	SEXP_free(name_ent);
 	SEXP_free(pid_ent);

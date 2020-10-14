@@ -334,71 +334,11 @@ default_external_probe(void *ctx, oval_subtype_t probe_type, char *id, oval_exte
     return res;
 }
 
-static oval_external_probe_result_t *
-external_environmentvariable_probe(void *ctx, char *id, oval_external_probe_item_t* values)
-{
-    oval_external_probe_item_list_t *items;
-    oval_syschar_status_t status = SYSCHAR_STATUS_UNKNOWN;
-    //    xmlNodePtr datapointsNode = (xmlNodePtr) ctx;
-
-    printf("EXTPROBE: external_environmentvariable_probe(%p, %s)\n", ctx, id);
-    dump_oval_external_probe_item("EXTPROBE: external_environmentvariable_probe", values);
-
-    oval_external_probe_result_t *res = oval_external_probe_result_new(id);
-    oval_external_probe_item_t *vars = oval_external_probe_item_new(
-            "PATH", oval_external_probe_item_value_new_string("/some/folder"),
-            "CLOUD", oval_external_probe_item_value_new_string("dodo-red"),
-            NULL);
-
-    items = oval_external_probe_item_list_new(vars);
-    if (items == NULL) {
-        printf("EXTPROBE: external_environmentvariable_probe(%p, %s) could not create item list\n", ctx, id);
-        status = SYSCHAR_STATUS_ERROR;
-    }
-
-    oval_external_probe_result_set_items(res, items);
-    oval_external_probe_result_set_status(res, status);
-
-    return res;
-}
-
-static oval_external_probe_result_t *
-external_system_info_probe(void *ctx, char *id, oval_external_probe_item_t *values)
-{
-    oval_external_probe_item_list_t *items;
-    oval_syschar_status_t status = SYSCHAR_STATUS_UNKNOWN;
-    //    xmlDocPtr datapointsDoc = (xmlDocPtr) ctx;
-
-    printf("EXTPROBE: external_system_info_probe(%p, %s)\n", ctx, id);
-    dump_oval_external_probe_item("EXTPROBE: external_system_info_probe", values);
-
-    oval_external_probe_result_t *res = oval_external_probe_result_new(id);
-    oval_external_probe_item_t *vars = oval_external_probe_item_new(
-            "os_name", oval_external_probe_item_value_new_string("Windows"),
-            "os_version", oval_external_probe_item_value_new_string("XP"),
-            "os_architecture", oval_external_probe_item_value_new_string("x86"),
-            "primary_host_name", oval_external_probe_item_value_new_string("ExternalProbeMachine"),
-            NULL);
-
-    items = oval_external_probe_item_list_new(vars);
-    if (items == NULL) {
-        printf("EXTPROBE: external_system_info_probe(%p, %s) could not create item list\n", ctx, id);
-        status = SYSCHAR_STATUS_ERROR;
-    }
-
-    oval_external_probe_result_set_items(res, items);
-    oval_external_probe_result_set_status(res, status);
-
-    return res;
-}
-
 static void fill_external_probe_eval_funcs(oval_external_probe_eval_funcs_t *eval)
 {
     memset(eval, 0, sizeof(*eval));
-    eval->default_probe = default_external_probe;
     eval->default_probe_only = true;
-    eval->system_info_probe = external_system_info_probe;
-    eval->environment_variable_probe = external_environmentvariable_probe;
+    eval->default_probe = default_external_probe;
 }
 
 #endif

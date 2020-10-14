@@ -299,14 +299,14 @@ cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_REGISTRY "Windows registry probe" 
 cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_WMI57 "Windows wmi57 probe" ON "ENABLE_PROBES_WINDOWS" OFF)
 
 # EXTERNALLY COLLECTED PROBES
-cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE "Independent environmentvariable probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE58 "Independent environmentvariable58 probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
+# cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE "Independent environmentvariable probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
+# cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_ENVIRONMENTVARIABLE58 "Independent environmentvariable58 probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_FAMILY "Independent family probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_FILEHASH "Independent filehash probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_FILEHASH58 "Independent filehash58 probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_SQL "Independent sql probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_SQL57 "Independent sql57 probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_SYSTEM_INFO "Independent system info probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
+# cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_SYSTEM_INFO "Independent system info probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_TEXTFILECONTENT "Independent textfilecontent probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 # cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_TEXTFILECONTENT54 "Independent textfilecontent54 probe" ON "EXTERNAL_PROBE_COLLECT" OFF)
 cmake_dependent_option(OPENSCAP_PROBE_EXT_INDEPENDENT_VARIABLE "Independent variable probe" ON "EXTERNAL_PROBE_COLLECT" OFF)

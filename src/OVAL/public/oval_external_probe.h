@@ -63,10 +63,9 @@ struct oval_external_probe_item_list_iterator;
  */
 typedef struct oval_external_probe_eval_funcs {
     void* probe_ctx;
-    bool default_probe_only;    // If true, only call the default probe and ignore specialised probe implementations
+    // Set to true to always use the default probe
+    bool default_probe_only;
     oval_external_probe_result_t* (*default_probe)(void *ctx, oval_subtype_t type, char *id, oval_external_probe_item_t* query);
-    oval_external_probe_result_t* (*environment_variable_probe)(void* probe_ctx, char* probe_id, oval_external_probe_item_t* probe_query);
-    oval_external_probe_result_t* (*system_info_probe)(void* probe_ctx, char* probe_id, oval_external_probe_item_t* probe_query);
 } oval_external_probe_eval_funcs_t;
 
 /**

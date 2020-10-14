@@ -1101,7 +1101,7 @@ SEXP_t *probe_worker(probe_t *probe, SEAP_msg_t *msg_in, int *ret)
             pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &__unused_oldstate);
 
 #ifdef EXTERNAL_PROBE_COLLECT
-            if (probe_main_function != NULL && pctx.ext_probe_eval != NULL && !pctx.ext_probe_eval->default_probe_only) {
+            if (probe_main_function != NULL && (pctx.ext_probe_eval == NULL || !pctx.ext_probe_eval->default_probe_only)) {
                 dI("I will run %s_probe_main:", subtype_str);
                 *ret = probe_main_function(&pctx, probe->probe_arg);
             } else {
