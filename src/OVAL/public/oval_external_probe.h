@@ -64,7 +64,7 @@ struct oval_external_probe_item_list_iterator;
 typedef struct oval_external_probe_eval_funcs {
     void* probe_ctx;
     bool default_probe_only;    // If true, only call the default probe and ignore specialised probe implementations
-    oval_external_probe_result_t* (*default_probe)(void* probe_ctx,oval_subtype_t probe_type, char* probe_id, oval_external_probe_item_t* probe_query);
+    oval_external_probe_result_t* (*default_probe)(void *ctx, oval_subtype_t type, char *id, oval_external_probe_item_t* query);
     oval_external_probe_result_t* (*environment_variable_probe)(void* probe_ctx, char* probe_id, oval_external_probe_item_t* probe_query);
     oval_external_probe_result_t* (*system_info_probe)(void* probe_ctx, char* probe_id, oval_external_probe_item_t* probe_query);
 } oval_external_probe_eval_funcs_t;
@@ -151,36 +151,36 @@ OSCAP_API void oval_external_probe_item_list_push(oval_external_probe_item_list_
 /**
  * @memberof oval_external_probe_result
  */
-OSCAP_API oval_external_probe_result_t* oval_external_probe_result_new(char*);
+OSCAP_API oval_external_probe_result_t* oval_external_probe_result_new(char* name);
 /**
  * @memberof oval_external_probe_result
  */
-OSCAP_API void oval_external_probe_result_free(oval_external_probe_result_t*);
+OSCAP_API void oval_external_probe_result_free(oval_external_probe_result_t* res);
 
 /**
  * @memberof oval_external_probe_result
  * @param status one of the SYSCHAR_STATUS_ constants defined in @ref OVALSYS
  */
-OSCAP_API void oval_external_probe_result_set_status(oval_external_probe_result_t*, oval_syschar_status_t status);
+OSCAP_API void oval_external_probe_result_set_status(oval_external_probe_result_t* res, oval_syschar_status_t status);
 /**
  * @memberof oval_external_probe_result
  */
-OSCAP_API void oval_external_probe_result_set_items(oval_external_probe_result_t*, oval_external_probe_item_list_t*);
+OSCAP_API void oval_external_probe_result_set_items(oval_external_probe_result_t* res, oval_external_probe_item_list_t* list);
 /**
  * Get OVAL external probe result name.
  * @return A pointer to the name attribute of the specified @ref oval_external_probe_result.
  * @memberof oval_external_probe_result
  */
-OSCAP_API const char* oval_external_probe_result_get_name(oval_external_probe_result_t*);
+OSCAP_API const char* oval_external_probe_result_get_name(oval_external_probe_result_t* res);
 /**
  * @memberof oval_external_probe_result
  * @return one of the SYSCHAR_STATUS_ constants defined in @ref OVALSYS
  */
-OSCAP_API oval_syschar_status_t oval_external_probe_result_get_status(oval_external_probe_result_t*);
+OSCAP_API oval_syschar_status_t oval_external_probe_result_get_status(oval_external_probe_result_t* res);
 /**
  * @memberof oval_external_probe_result
  */
-OSCAP_API oval_external_probe_item_list_t* oval_external_probe_result_get_items(oval_external_probe_result_t*);
+OSCAP_API oval_external_probe_item_list_t* oval_external_probe_result_get_items(oval_external_probe_result_t* res);
 
 /**
  * @memberof oval_external_probe_item_iterator
@@ -203,8 +203,8 @@ OSCAP_API const char* oval_external_probe_item_iterator_next_value_name(struct o
 #define OVAL_EXTERNAL_PROBE_ITEM_FOREACH(item, name_var, val_var, code) {                                               \
         struct oval_external_probe_item_iterator *item##_iter = oval_external_probe_item_iterator_new(item);            \
         while(oval_external_probe_item_iterator_has_more_values(item##_iter)) {                                         \
-            name_var = oval_external_probe_item_iterator_next_value_name(item##_iter);                                  \
-            val_var = oval_external_probe_item_get_value(item, name_var);                                               \
+            (name_var) = oval_external_probe_item_iterator_next_value_name(item##_iter);                                \
+            (val_var) = oval_external_probe_item_get_value(item, name_var);                                             \
             code                                                                                                        \
         }                                                                                                               \
         oval_external_probe_item_iterator_free(item##_iter);                                                            \
@@ -231,7 +231,7 @@ OSCAP_API oval_external_probe_item_t* oval_external_probe_item_list_iterator_nex
 #define OVAL_EXTERNAL_PROBE_ITEM_LIST_FOREACH(list, item_var, code) {                                                   \
         struct oval_external_probe_item_list_iterator *list##_iter = oval_external_probe_item_list_iterator_new(list);  \
         while(oval_external_probe_item_list_iterator_has_more_items(list##_iter)) {                                     \
-            item_var = oval_external_probe_item_list_iterator_next_item(list##_iter);                                   \
+            (item_var) = oval_external_probe_item_list_iterator_next_item(list##_iter);                                 \
             code                                                                                                        \
         }                                                                                                               \
         oval_external_probe_item_list_iterator_free(list##_iter);                                                       \
@@ -241,4 +241,5 @@ OSCAP_API oval_external_probe_item_t* oval_external_probe_item_list_iterator_nex
  * @}END OVALEXTPROBE
  * @}END OVAL
  */
+
 #endif  // OVAL_EXTERNAL_PROBE_H_
