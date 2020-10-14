@@ -9,12 +9,92 @@
 
 #ifdef EXTERNAL_PROBE_COLLECT
 
+static inline char* get_probe_query_value_name(SEXP_t *ent) {
+    SEXP_t *ent_name, *aux;
+    char *ent_name_cstr = NULL;
+
+    __attribute__nonnull__(ent);
+
+    ent_name = SEXP_list_first(ent);
+    if(SEXP_listp(ent_name)) {
+        aux = SEXP_list_first(ent_name);
+        SEXP_free(ent_name);
+        ent_name = aux;
+    }
+    if(SEXP_stringp(ent_name)) {
+        ent_name_cstr = SEXP_string_cstr(ent_name);
+    }
+    SEXP_free(ent_name);
+
+    return ent_name_cstr;
+}
+
+static inline oval_external_probe_item_value_t* create_probe_query_value_string(SEXP_t *ent_val) {
+    char *ent_val_cstr;
+    oval_external_probe_item_value_t *ent_val_item;
+
+    ent_val_cstr = SEXP_string_cstr(ent_val);
+    ent_val_item = oval_external_probe_item_value_new_string(ent_val_cstr);
+    free(ent_val_cstr);
+
+    return ent_val_item;
+}
+
+static inline oval_external_probe_item_value_t* create_probe_query_value_number(SEXP_t *ent_val) {
+    SEXP_numtype_t number_type;
+    oval_external_probe_item_value_t *ent_val_item = NULL;
+
+    number_type = SEXP_number_type(ent_val);
+    switch(number_type) {
+        case SEXP_NUM_BOOL:
+            ent_val_item = oval_external_probe_item_value_new_boolean(SEXP_number_getb(ent_val));
+            break;
+        case SEXP_NUM_INT8:
+        case SEXP_NUM_UINT8:
+        case SEXP_NUM_INT16:
+        case SEXP_NUM_UINT16:
+        case SEXP_NUM_INT32:
+        case SEXP_NUM_UINT32:
+        case SEXP_NUM_INT64:
+        case SEXP_NUM_UINT64:
+            ent_val_item = oval_external_probe_item_value_new_integer(SEXP_number_geti_64(ent_val));
+            break;
+        case SEXP_NUM_DOUBLE:
+            ent_val_item = oval_external_probe_item_value_new_float(SEXP_number_getf(ent_val));
+            break;
+        default:
+            dW("Unsupported SEXP number type %d", number_type);
+    }
+
+    return ent_val_item;
+}
+
+static inline oval_external_probe_item_value_t* create_probe_query_value(SEXP_t *ent) {
+    SEXP_t *ent_val;
+    oval_external_probe_item_value_t *ent_val_item = NULL;
+
+    __attribute__nonnull__(ent);
+
+    ent_val = probe_ent_getval(ent);
+    if(SEXP_stringp(ent_val)) {
+        ent_val_item = create_probe_query_value_string(ent_val);
+    } else if(SEXP_numberp(ent_val)) {
+        ent_val_item = create_probe_query_value_number(ent_val);
+    }
+    if(ent_val_item == NULL) {
+        dW("Unsupported SEXP value of type \"%s\"", SEXP_datatype(ent_val));
+    }
+    SEXP_free(ent_val);
+
+    return ent_val_item;
+}
+
 static int create_probe_query(SEXP_t *in, oval_external_probe_item_t** out_ext_query) {
     int ret = 0;
-    char *str_val, *item_val_name;
+    char *ent_name_cstr;
+    SEXP_t *ents = NULL, *ent;
     oval_external_probe_item_t *ext_query;
-    oval_external_probe_item_value_t *item_val;
-    SEXP_t *ents = NULL, *ent, *ent_name, *ent_val, *aux;
+    oval_external_probe_item_value_t *ent_val_item;
 
     __attribute__nonnull__(in);
     __attribute__nonnull__(out_ext_query);
@@ -24,67 +104,29 @@ static int create_probe_query(SEXP_t *in, oval_external_probe_item_t** out_ext_q
         ret = PROBE_ENOMEM;
         goto fail;
     }
-
     ents = SEXP_list_rest(in);
     SEXP_list_foreach(ent, ents) {
-        item_val = NULL;
-
-        ent_name = SEXP_list_first(ent);
-        if(SEXP_listp(ent_name)) {
-            aux = SEXP_list_first(ent_name);
-            SEXP_free(ent_name);
-            ent_name = aux;
+        ent_val_item = NULL;
+        ent_name_cstr = get_probe_query_value_name(ent);
+        if(ent_name_cstr == NULL) {
+            continue;
         }
-
-        if(SEXP_stringp(ent_name)) {
-            ent_val = probe_ent_getval(ent);
-            if(SEXP_stringp(ent_val)) {
-                str_val = SEXP_string_cstr(ent_val);
-                item_val = oval_external_probe_item_value_new_string(str_val);
-                free(str_val);
-            } else if(SEXP_numberp(ent_val)) {
-                switch(SEXP_number_type(ent_val)) {
-                    case SEXP_NUM_BOOL:
-                        item_val = oval_external_probe_item_value_new_boolean(SEXP_number_getb(ent_val));
-                        break;
-                    case SEXP_NUM_INT8:
-                    case SEXP_NUM_UINT8:
-                    case SEXP_NUM_INT16:
-                    case SEXP_NUM_UINT16:
-                    case SEXP_NUM_INT32:
-                    case SEXP_NUM_UINT32:
-                    case SEXP_NUM_INT64:
-                    case SEXP_NUM_UINT64:
-                        item_val = oval_external_probe_item_value_new_integer(SEXP_number_geti_64(ent_val));
-                        break;
-                    case SEXP_NUM_DOUBLE:
-                        item_val = oval_external_probe_item_value_new_float(SEXP_number_getf(ent_val));
-                        break;
-                    default:
-                        dW("Skipping unsupported SEXP number type %d", SEXP_number_type(ent_val));
-                }
-            } else {
-                dW("Skipping unsupported SEXP type %s", SEXP_datatype(ent_val));
-            }
-            SEXP_free(ent_val);
-
-            if(item_val != NULL) {
-                item_val_name = SEXP_string_cstr(ent_name);
-                oval_external_probe_item_set_value(ext_query, item_val_name, item_val);
-                free(item_val_name);
-            }
+        ent_val_item = create_probe_query_value(ent);
+        if(ent_val_item == NULL) {
+            free(ent_name_cstr);
+            continue;
         }
-        SEXP_free(ent_name);
+        oval_external_probe_item_set_value(ext_query, ent_name_cstr, ent_val_item);
+        free(ent_name_cstr);
     }
-
     *out_ext_query = ext_query;
 
     goto cleanup;
 
-    fail:
+fail:
     oval_external_probe_item_free(ext_query);
 
-    cleanup:
+cleanup:
     SEXP_free(ents);
 
     return ret;
@@ -151,10 +193,10 @@ static int collect_probe_item(probe_ctx *ctx, oval_subtype_t type, oval_syschar_
 
     goto cleanup;
 
-    fail:
+fail:
     SEXP_free(probe_item);
 
-    cleanup:
+cleanup:
     return ret;
 }
 
