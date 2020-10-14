@@ -1817,10 +1817,4 @@ SEXP_t *probe_obj_getmask(SEXP_t *obj) {
     return (mask);
 }
 
-#ifdef EXTERNAL_PROBE_COLLECT
-
-
-
-#endif
-
 /// @}
