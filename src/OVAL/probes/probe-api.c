@@ -1575,6 +1575,137 @@ SEXP_t *probe_item_create(oval_subtype_t item_subtype, probe_elmatr_t *item_attr
         return (item);
 }
 
+int probe_item_add_value(SEXP_t *item, const char *value_name, oval_datatype_t value_type, void *pvalue) {
+    bool multiplied = false;
+    bool free_value = true;
+    int value_i = 0;
+    int multiply = 1;
+
+    SEXP_t *value_sexp = NULL, *entity;
+    SEXP_t value_sexp_mem;
+
+    char *value_str, **value_stra;
+    int64_t value_int;
+    double value_flt;
+    bool value_bool;
+
+    if (item == NULL) {
+        return -1;
+    }
+
+    switch (value_type) {
+        case OVAL_DATATYPE_STRING:
+            value_str = *(char**)pvalue;
+
+            if (value_str == NULL)
+                return 0;
+
+            value_sexp = SEXP_string_new_r(&value_sexp_mem, value_str, strlen(value_str));
+            break;
+        case OVAL_DATATYPE_STRING_M:
+            value_type = OVAL_DATATYPE_STRING;
+            value_stra = *(char***)pvalue;
+            multiplied = true;
+            multiply = 0;
+
+            if (value_stra == NULL)
+                return 0;
+
+            while (value_stra[multiply] != NULL)
+                ++multiply;
+
+            value_sexp = malloc(sizeof(SEXP_t) * multiply);
+
+            for (value_i = 0; value_i < multiply; ++value_i)
+                SEXP_string_new_r(value_sexp + value_i, value_stra[value_i], strlen(value_stra[value_i]));
+
+            value_i = 0;
+            break;
+        case OVAL_DATATYPE_BOOLEAN:
+            value_bool = *(bool*)pvalue;
+            value_sexp = SEXP_number_newb_r(&value_sexp_mem, value_bool);
+            break;
+        case OVAL_DATATYPE_INTEGER:
+            value_int = *(int64_t*)pvalue;
+            value_sexp = SEXP_number_newi_64_r(&value_sexp_mem, value_int);
+            break;
+        case OVAL_DATATYPE_FLOAT:
+            value_flt = *(double*)pvalue;
+            value_sexp = SEXP_number_newf_r(&value_sexp_mem, value_flt);
+            break;
+        case OVAL_DATATYPE_SEXP:
+            value_sexp = *(SEXP_t**)pvalue;
+
+            if (value_sexp == NULL)
+                return 0;
+            else
+                free_value = false;
+
+            value_type = _sexp_val_getdatatype(value_sexp);
+            break;
+        case OVAL_DATATYPE_RECORD:
+            entity = *(SEXP_t**)pvalue;
+            SEXP_list_add(item, entity);
+            return 0;
+        case OVAL_DATATYPE_EVR_STRING:
+        case OVAL_DATATYPE_DEBIAN_EVR_STRING:
+        case OVAL_DATATYPE_FILESET_REVISION:
+        case OVAL_DATATYPE_IOS_VERSION:
+        case OVAL_DATATYPE_IPV4ADDR:
+        case OVAL_DATATYPE_IPV6ADDR:
+        case OVAL_DATATYPE_VERSION:
+            value_str = *(char**)pvalue;
+            value_sexp = SEXP_string_new_r(&value_sexp_mem, value_str, strlen(value_str));
+
+            break;
+            /* TODO */
+        case OVAL_DATATYPE_BINARY:
+        case OVAL_DATATYPE_UNKNOWN:
+        default:
+            dE("Unknown or unsupported OVAL datatype: %d, '%s', name: '%s'.",
+               value_type, oval_datatype_get_text(value_type), value_name);
+            return -2;
+    }
+
+    SEXP_t *name_sexp = probe_ncache_ref(OSCAP_GSYM(ncache), value_name);
+    SEXP_t entity_mem;
+
+    while (value_i < multiply) {
+        entity = SEXP_list_new_r(&entity_mem, name_sexp, value_sexp + value_i, NULL);
+
+        if (probe_ent_setdatatype(entity, value_type) != 0) {
+            SEXP_free_r(&entity_mem);
+            SEXP_free(name_sexp);
+
+            if (free_value) {
+                while (value_i < multiply)
+                    SEXP_free_r(value_sexp + value_i++);
+                if (multiplied)
+                    free(value_sexp);
+            }
+
+            return -3;
+        }
+
+        if (entity == NULL || name_sexp == NULL) {
+            return -4;
+        }
+        SEXP_list_add(item, entity);
+        SEXP_free_r(&entity_mem);
+
+        if (free_value)
+            SEXP_free_r(value_sexp + value_i);
+        ++value_i;
+    }
+
+    SEXP_free(name_sexp);
+
+    if (multiplied)
+        free(value_sexp);
+
+    return 0;
+}
+
 oval_operation_t probe_ent_getoperation(SEXP_t *entity, oval_operation_t default_op)
 {
         oval_operation_t ret;

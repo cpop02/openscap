@@ -25,7 +25,11 @@ int main(void)
 	/*
 	 *  Create probe session
 	 */
-	oval_probe_session_t *sess = oval_probe_session_new(sys_model);
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+	oval_probe_session_t *sess = oval_probe_session_new(sys_model, NULL);
+#else
+    oval_probe_session_t *sess = oval_probe_session_new(sys_model);
+#endif
 	oscap_assert(sess != NULL);
 
 	/*

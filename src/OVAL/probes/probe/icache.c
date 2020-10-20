@@ -30,6 +30,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #if defined(OS_FREEBSD)
 #include <pthread_np.h>
@@ -50,7 +51,7 @@ static volatile uint32_t next_ID = 0;
 pthread_mutex_t next_ID_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-static void probe_icache_item_setID(SEXP_t *item, SEXP_ID_t item_ID)
+static void probe_icache_item_setID(SEXP_t *item)
 {
         SEXP_t  *name_ref, *prev_id;
         SEXP_t   uniq_id;
@@ -133,7 +134,7 @@ static int icache_lookup(rbt_t *tree, int64_t item_id, probe_iqpair_t *pair) {
 		cached->item[cached->count - 1] = pair->p.item;
 
 		/* Assign an unique item ID */
-		probe_icache_item_setID(pair->p.item, item_id);
+		probe_icache_item_setID(pair->p.item);
 	} else {
 		/*
 		* Cache HIT
@@ -153,7 +154,7 @@ static void icache_add_to_tree(rbt_t *tree, int64_t item_id, probe_iqpair_t *pai
 	cached->count = 1;
 
 	/* Assign an unique item ID */
-	probe_icache_item_setID(pair->p.item, item_id);
+	probe_icache_item_setID(pair->p.item);
 
 	if (rbt_i64_add(tree, (int64_t)item_id, (void **)cached, NULL) != 0) {
 		dE("Can't add item (k=%"PRIi64" to the cache (%p)", item_id, tree);
@@ -194,7 +195,11 @@ const char* thread_name = "icache_worker";
 	pair = &pair_mem;
         dD("icache worker ready");
 
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+        switch (errno = pthread_barrier_wait(&cache->queue_barrier))
+#else
         switch (errno = pthread_barrier_wait(&OSCAP_GSYM(th_barrier)))
+#endif
         {
         case 0:
         case PTHREAD_BARRIER_SERIAL_THREAD:
@@ -305,7 +310,13 @@ probe_icache_t *probe_icache_new(void)
         probe_icache_t *cache = malloc(sizeof(probe_icache_t));
         cache->tree = rbt_i64_new();
 
-        if (pthread_mutex_init(&cache->queue_mutex, NULL) != 0) {
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+    if((errno = pthread_barrier_init(&cache->queue_barrier, NULL, 2)) != 0) {
+        dE("Can't initialize icache barrier: %u, %s", errno, strerror(errno));
+        goto fail;
+    }
+#endif
+    if (pthread_mutex_init(&cache->queue_mutex, NULL) != 0) {
                 dE("Can't initialize icache mutex: %u, %s", errno, strerror(errno));
                 goto fail;
         }
@@ -338,13 +349,28 @@ probe_icache_t *probe_icache_new(void)
 fail:
         if (cache->tree != NULL)
                 rbt_i64_free(cache->tree);
-
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+        pthread_barrier_destroy(&cache->queue_barrier);
+#endif
         pthread_mutex_destroy(&cache->queue_mutex);
         pthread_cond_destroy(&cache->queue_notempty);
         free(cache);
 
         return (NULL);
 }
+
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+int probe_icache_wait(probe_icache_t *cache) {
+    int ret;
+
+    ret = pthread_barrier_wait(&cache->queue_barrier);
+    if(ret != 0) {
+        dE("pthread_barrier_wait: %d, %s.", ret, strerror(ret));
+    }
+
+    return ret;
+}
+#endif
 
 static int __probe_icache_add_nolock(probe_icache_t *cache, SEXP_t *cobj, SEXP_t *item, pthread_cond_t *cond)
 {
@@ -610,6 +636,9 @@ void probe_icache_free(probe_icache_t *cache)
 
         pthread_cancel(cache->thid);
         pthread_join(cache->thid, &ret);
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+        pthread_barrier_destroy(&cache->queue_barrier);
+#endif
         pthread_mutex_destroy(&cache->queue_mutex);
         pthread_cond_destroy(&cache->queue_notempty);
         pthread_cond_destroy(&cache->queue_notfull);

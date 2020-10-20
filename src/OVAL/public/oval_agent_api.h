@@ -43,6 +43,9 @@
 #include "oval_variables.h"
 #include "oscap_export.h"
 //#include "oval_probe.h"
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+#include "oval_evaluation.h"
+#endif
 
 struct oval_agent_session;
 
@@ -58,7 +61,11 @@ typedef struct oval_agent_session oval_agent_session_t;
  * @param model OVAL Definition model
  * @param name Name of file that can be referenced from XCCDF Benchmark
  */
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+OSCAP_API oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name, oval_evaluation_t *eval);
+#else
 OSCAP_API oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name);
+#endif
 
 /**
  * Retrieves OVAL definition model associated with given session

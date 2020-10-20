@@ -64,6 +64,10 @@
 #if defined(ENABLE_PROBES)
 #define OVAL_PROBES_ENABLED
 #endif
+#cmakedefine ENABLE_EXTERNAL_PROBES
+#if defined(ENABLE_EXTERNAL_PROBES)
+#define OVAL_EXTERNAL_PROBES_ENABLED
+#endif
 
 #cmakedefine HAVE_SYSLOG_H
 #cmakedefine HAVE_STDIO_EXT_H

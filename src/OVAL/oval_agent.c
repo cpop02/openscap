@@ -50,6 +50,9 @@
 #include "common/debug_priv.h"
 #include "common/_error.h"
 #include "oval_agent_xccdf_api.h"
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+#include <oval_evaluation.h>
+#endif
 
 struct oval_agent_session {
 	char *filename;
@@ -62,6 +65,9 @@ struct oval_agent_session {
 #if defined(OVAL_PROBES_ENABLED)
 	struct oval_results_model    * res_model;
 	oval_probe_session_t  * psess;
+#endif
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+	oval_evaluation_t *eval;
 #endif
 };
 
@@ -89,7 +95,11 @@ static const struct oval_result_to_xccdf_spec XCCDF_OVAL_RESULTS_MAP[] = {
 	{0, 0, 0}
 };
 
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *model, const char * name, oval_evaluation_t *eval) {
+#else
 oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *model, const char * name) {
+#endif
 	struct oval_sysinfo *sysinfo;
 	struct oval_generator *generator;
 	int ret;
@@ -104,8 +114,13 @@ oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *mode
 	ag_sess->def_model = model;
 	ag_sess->cur_var_model = NULL;
 	ag_sess->sys_model = oval_syschar_model_new(model);
-#if defined(OVAL_PROBES_ENABLED)
-	ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model);
+#ifdef OVAL_PROBES_ENABLED
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+	ag_sess->eval = eval;
+    ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model, eval);
+#else
+    ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model);
+#endif
 #endif
 
 #if defined(OVAL_PROBES_ENABLED)

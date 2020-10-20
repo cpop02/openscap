@@ -19,7 +19,7 @@ set (OVAL_SOURCES
     "oval_definitions_impl.h"
     "oval_entity.c"
     "oval_enumerations.c"
-    "oval_filter.c"
+	"oval_filter.c"
     "oval_generator.c"
     "oval_glob_to_regex.c"
     "oval_glob_to_regex.h"
@@ -50,7 +50,7 @@ set (OVAL_SOURCES
     "oval_sys_parser.c"
     "oval_varModel.c"
     "oval_vardefMapping.c"
-)
+	)
 
 if (ENABLE_PROBES)
     list(APPEND OVAL_SOURCES
@@ -81,6 +81,17 @@ if (ENABLE_PROBES)
     list(APPEND OVAL_SOURCES
 	"oval_probe_ext.c"
     )
+
+	if (ENABLE_EXTERNAL_PROBES)
+		list(APPEND OVAL_SOURCES
+		"oval_evaluation.c"
+		"oval_external_probe_item.c"
+		"oval_external_probe_item_list.c"
+		"oval_external_probe_result.c"
+		"oval_probe_exec.h"
+		"oval_probe_exec.c"
+		)
+	endif()
 endif()
 
 include_directories(

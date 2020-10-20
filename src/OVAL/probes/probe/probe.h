@@ -34,6 +34,10 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <pthread.h>
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+#include <oval_evaluation.h>
+#include "external_probe_executor.h"
+#endif
 #include "_seap.h"
 #include "ncache.h"
 #include "rcache.h"
@@ -78,11 +82,27 @@ typedef struct {
 } probe_t;
 
 struct probe_ctx {
-        SEXP_t         *probe_in;  /**< S-exp representation of the input object */
-        SEXP_t         *probe_out; /**< collected object */
-        SEXP_t         *filters;   /**< object filters (OVAL 5.8 and higher) */
-        probe_icache_t *icache;    /**< item cache */
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+    oval_evaluation_t *eval;
+    external_probe_request_t *req;
+#endif
+    SEXP_t         *probe_in;  /**< S-exp representation of the input object */
+    SEXP_t         *probe_out; /**< collected object */
+    SEXP_t         *filters;   /**< object filters (OVAL 5.8 and higher) */
+    probe_icache_t *icache;    /**< item cache */
 	int offline_mode;
+};
+
+struct probe_varref_ctx {
+    SEXP_t *pi2;
+    unsigned int ent_cnt;
+    struct probe_varref_ctx_ent *ent_lst;
+};
+
+struct probe_varref_ctx_ent {
+    SEXP_t *ent_name_sref;
+    unsigned int val_cnt;
+    unsigned int next_val_idx;
 };
 
 typedef enum {
@@ -93,5 +113,11 @@ typedef enum {
 } probe_offline_flags;
 
 extern pthread_barrier_t OSCAP_GSYM(th_barrier);
+
+int probe_varref_create_ctx(const SEXP_t *probe_in, SEXP_t *varrefs, struct probe_varref_ctx **octx);
+void probe_varref_destroy_ctx(struct probe_varref_ctx *ctx);
+int probe_varref_iterate_ctx(struct probe_varref_ctx *ctx);
+
+SEXP_t *probe_set_combine(SEXP_t *cobj0, SEXP_t *cobj1, oval_setobject_operation_t op);
 
 #endif /* PROBE_H */

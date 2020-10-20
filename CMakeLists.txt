@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	message(STATUS "Setting build type to 'Release' as none was specified.")
 	set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
 	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-		"MinSizeRel" "RelWithDebInfo")
+			"MinSizeRel" "RelWithDebInfo")
 endif()
 
 project("openscap")
@@ -48,12 +48,12 @@ message(STATUS " ")
 # discourage our users from using them
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 	message(FATAL_ERROR "In-source builds are not supported! Please use out of source builds:\n"
-		"$ cd openscap\n"
-		"$ rm CMakeCache.txt\n"
-		"$ cd build\n"
-		"$ cmake ../\n"
-		"$ make -j4"
-		)
+			"$ cd openscap\n"
+			"$ rm CMakeCache.txt\n"
+			"$ cd build\n"
+			"$ cmake ../\n"
+			"$ make -j4"
+			)
 endif()
 
 # In Microsoft Visual Studio, store built binaries to a single directory.
@@ -224,78 +224,81 @@ endif()
 # ---------- OVAL FEATURE SWITCHES
 
 option(ENABLE_PROBES "build OVAL probes - each probe implements an OVAL test" TRUE)
+option(ENABLE_EXTERNAL_PROBES "use an external API to collect probe results" TRUE)
+if (NOT ENABLE_PROBES)
+	set(ENABLE_EXTERNAL_PROBES FALSE)
+endif()
 set(SEAP_MSGID_BITS 32 CACHE STRING "Size of SEAP_msgid_t in bits [32|64]")
 cmake_dependent_option(ENABLE_PROBES_INDEPENDENT "build OVAL probes for independent (cross platform) OVAL tests" ON "ENABLE_PROBES" OFF)
 # On some platforms (Windows..) UNIX ends up being empty instead of "false"
 set(IS_UNIX FALSE)
 if (UNIX)
-    set(IS_UNIX TRUE)
+	set(IS_UNIX TRUE)
 endif()
-cmake_dependent_option(ENABLE_PROBES_UNIX "build OVAL probes for the UNIX OVAL tests" ${IS_UNIX} "ENABLE_PROBES" OFF)
+cmake_dependent_option(ENABLE_PROBES_UNIX "build OVAL probes for the UNIX OVAL tests" ${IS_UNIX} "ENABLE_PROBES; NOT ENABLE_EXTERNAL_PROBES" OFF)
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} "Linux" IS_LINUX)
-cmake_dependent_option(ENABLE_PROBES_LINUX "build OVAL probes for the Linux OVAL tests" ${IS_LINUX} "ENABLE_PROBES" OFF)
+cmake_dependent_option(ENABLE_PROBES_LINUX "build OVAL probes for the Linux OVAL tests" ${IS_LINUX} "ENABLE_PROBES; NOT ENABLE_EXTERNAL_PROBES" OFF)
 string(COMPARE EQUAL ${CMAKE_SYSTEM_NAME} "Solaris" IS_SOLARIS)
-cmake_dependent_option(ENABLE_PROBES_SOLARIS "build OVAL probes for the Solaris OVAL tests" ${IS_SOLARIS} "ENABLE_PROBES" OFF)
+cmake_dependent_option(ENABLE_PROBES_SOLARIS "build OVAL probes for the Solaris OVAL tests" ${IS_SOLARIS} "ENABLE_PROBES; NOT ENABLE_EXTERNAL_PROBES" OFF)
 set(IS_WIN32 FALSE)
 if (WIN32)
-    set(IS_WIN32 TRUE)
+	set(IS_WIN32 TRUE)
 endif()
-cmake_dependent_option(ENABLE_PROBES_WINDOWS "build OVAL probes for the Windows OVAL tests" ${IS_WIN32} "ENABLE_PROBES" OFF)
+cmake_dependent_option(ENABLE_PROBES_WINDOWS "build OVAL probes for the Windows OVAL tests" ${IS_WIN32} "ENABLE_PROBES; NOT ENABLE_EXTERNAL_PROBES" OFF)
 
 # INDEPENDENT PROBES
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE "Independent environmentvariable probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE58 "Independent environmentvariable58 probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_FAMILY "Independent family probe" ON "ENABLE_PROBES_INDEPENDENT" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_FILEHASH "Independent filehash probe" ON "ENABLE_PROBES_INDEPENDENT; CRYPTO_FOUND; NOT WIN32" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_FILEHASH58 "Independent filehash58 probe" ON "ENABLE_PROBES_INDEPENDENT; CRYPTO_FOUND; NOT WIN32" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_SQL "Independent sql probe" ON "ENABLE_PROBES_INDEPENDENT; OPENDBX_FOUND; NOT WIN32" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_SQL57 "Independent sql57 probe" ON "ENABLE_PROBES_INDEPENDENT; OPENDBX_FOUND; NOT WIN32" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_SYSTEM_INFO "Independent system info probe" ON "ENABLE_PROBES_INDEPENDENT" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT "Independent textfilecontent probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT54 "Independent textfilecontent54 probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE "Independent environmentvariable probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE58 "Independent environmentvariable58 probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_FAMILY "Independent family probe" ON "ENABLE_PROBES_INDEPENDENT; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_FILEHASH "Independent filehash probe" ON "ENABLE_PROBES_INDEPENDENT; CRYPTO_FOUND; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_FILEHASH58 "Independent filehash58 probe" ON "ENABLE_PROBES_INDEPENDENT; CRYPTO_FOUND; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_SQL "Independent sql probe" ON "ENABLE_PROBES_INDEPENDENT; OPENDBX_FOUND; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_SQL57 "Independent sql57 probe" ON "ENABLE_PROBES_INDEPENDENT; OPENDBX_FOUND; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_SYSTEM_INFO "Independent system info probe" ON "ENABLE_PROBES_INDEPENDENT; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT "Independent textfilecontent probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_TEXTFILECONTENT54 "Independent textfilecontent54 probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
 cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_VARIABLE "Independent variable probe" ON "ENABLE_PROBES_INDEPENDENT" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_XMLFILECONTENT "Independent xmlfilecontent probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_YAMLFILECONTENT "Independent yamlfilecontent probe" ON "ENABLE_PROBES_INDEPENDENT; LIBYAML_FOUND; YAML_FILTER_FOUND; NOT WIN32" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_XMLFILECONTENT "Independent xmlfilecontent probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_YAMLFILECONTENT "Independent yamlfilecontent probe" ON "ENABLE_PROBES_INDEPENDENT; LIBYAML_FOUND; YAML_FILTER_FOUND; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
 
 # UNIX PROBES
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_DNSCACHE "Unix dnscache probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_FILE "Unix file probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_FILEEXTENDEDATTRIBUTE "Unix fileextendedattribute probe" ON "ENABLE_PROBES_UNIX; HAVE_SYS_XATTR_H OR HAVE_ATTR_XATTR_H OR HAVE_SYS_EXTATTR_H" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_GCONF "Unix gconf probe" ON "ENABLE_PROBES_UNIX; GCONF_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_INTERFACE "Unix interface probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_PASSWORD "Unix password probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_PROCESS "Unix process probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_PROCESS58 "Unix process58 probe" ON "ENABLE_PROBES_UNIX; CAP_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_ROUTINGTABLE "Unix routingtable probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_RUNLEVEL "Unix runlevel probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_SHADOW "Unix shadow probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_SYMLINK "Unix symlink probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_SYSCTL "Unix sysctl probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_UNAME "Unix uname probe" ON "ENABLE_PROBES_UNIX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_UNIX_XINETD "Unix xinetd probe" ON "ENABLE_PROBES_UNIX" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_DNSCACHE "Unix dnscache probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_FILE "Unix file probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_FILEEXTENDEDATTRIBUTE "Unix fileextendedattribute probe" ON "ENABLE_PROBES_UNIX; HAVE_SYS_XATTR_H OR HAVE_ATTR_XATTR_H OR HAVE_SYS_EXTATTR_H; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_GCONF "Unix gconf probe" ON "ENABLE_PROBES_UNIX; GCONF_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_INTERFACE "Unix interface probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_PASSWORD "Unix password probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_PROCESS "Unix process probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_PROCESS58 "Unix process58 probe" ON "ENABLE_PROBES_UNIX; CAP_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_ROUTINGTABLE "Unix routingtable probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_RUNLEVEL "Unix runlevel probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_SHADOW "Unix shadow probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_SYMLINK "Unix symlink probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_SYSCTL "Unix sysctl probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_UNAME "Unix uname probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_UNIX_XINETD "Unix xinetd probe" ON "ENABLE_PROBES_UNIX; NOT ENABLE_EXTERNAL_PROBES" OFF)
 
 # LINUX PROBES
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_DPKGINFO "Linux dpkginfo probe" ON "ENABLE_PROBES_LINUX; APTPKG_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_IFLISTENERS "Linux iflisteners probe" ON "ENABLE_PROBES_LINUX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_INETLISTENINGSERVERS "Linux inetlisteningservers probe" ON "ENABLE_PROBES_LINUX" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_PARTITION "Linux partition probe" ON "ENABLE_PROBES_LINUX; BLKID_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_RPMINFO "Linux rpminfo probe" ON "ENABLE_PROBES_LINUX; RPM_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_RPMVERIFY "Linux rpmverify probe" ON "ENABLE_PROBES_LINUX; RPM_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_RPMVERIFYFILE "Linux rpmverifyfile probe" ON "ENABLE_PROBES_LINUX; RPM_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_RPMVERIFYPACKAGE "Linux rpmverifypackage probe" ON "ENABLE_PROBES_LINUX; RPM_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_SELINUXBOOLEAN "Linux selinuxboolean probe" ON "ENABLE_PROBES_LINUX; SELINUX_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_SELINUXSECURITYCONTEXT "Linux selinuxsecuritycontext probe" ON "ENABLE_PROBES_LINUX; SELINUX_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_SYSTEMDUNITDEPENDENCY "Linux systemdunitdependency probe" ON "ENABLE_PROBES_LINUX; DBUS_FOUND" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_LINUX_SYSTEMDUNITPROPERTY "Linux systemdunitproperty probe" ON "ENABLE_PROBES_LINUX; DBUS_FOUND" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_DPKGINFO "Linux dpkginfo probe" ON "ENABLE_PROBES_LINUX; APTPKG_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_IFLISTENERS "Linux iflisteners probe" ON "ENABLE_PROBES_LINUX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_INETLISTENINGSERVERS "Linux inetlisteningservers probe" ON "ENABLE_PROBES_LINUX; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_PARTITION "Linux partition probe" ON "ENABLE_PROBES_LINUX; BLKID_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_RPMINFO "Linux rpminfo probe" ON "ENABLE_PROBES_LINUX; RPM_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_RPMVERIFY "Linux rpmverify probe" ON "ENABLE_PROBES_LINUX; RPM_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_RPMVERIFYFILE "Linux rpmverifyfile probe" ON "ENABLE_PROBES_LINUX; RPM_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_RPMVERIFYPACKAGE "Linux rpmverifypackage probe" ON "ENABLE_PROBES_LINUX; RPM_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_SELINUXBOOLEAN "Linux selinuxboolean probe" ON "ENABLE_PROBES_LINUX; SELINUX_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_SELINUXSECURITYCONTEXT "Linux selinuxsecuritycontext probe" ON "ENABLE_PROBES_LINUX; SELINUX_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_SYSTEMDUNITDEPENDENCY "Linux systemdunitdependency probe" ON "ENABLE_PROBES_LINUX; DBUS_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_LINUX_SYSTEMDUNITPROPERTY "Linux systemdunitproperty probe" ON "ENABLE_PROBES_LINUX; DBUS_FOUND; NOT ENABLE_EXTERNAL_PROBES" OFF)
 
 # SOLARIS PROBES
-cmake_dependent_option(OPENSCAP_PROBE_SOLARIS_ISAINFO "Solaris isainfo probe" ON "ENABLE_PROBES_SOLARIS" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_SOLARIS_ISAINFO "Solaris isainfo probe" ON "ENABLE_PROBES_SOLARIS; NOT ENABLE_EXTERNAL_PROBES" OFF)
 
 # WINDOWS PROBES
-cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN "Windows accesstoken probe" ON "ENABLE_PROBES_WINDOWS" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_REGISTRY "Windows registry probe" ON "ENABLE_PROBES_WINDOWS" OFF)
-cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_WMI57 "Windows wmi57 probe" ON "ENABLE_PROBES_WINDOWS" OFF)
-
+cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN "Windows accesstoken probe" ON "ENABLE_PROBES_WINDOWS; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_REGISTRY "Windows registry probe" ON "ENABLE_PROBES_WINDOWS; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_WMI57 "Windows wmi57 probe" ON "ENABLE_PROBES_WINDOWS; NOT ENABLE_EXTERNAL_PROBES" OFF)
 
 # ---------- EXECUTABLES / UTILITIES SWITCHES
 
@@ -361,6 +364,7 @@ message(STATUS " ")
 
 message(STATUS "OVAL:")
 message(STATUS "base probe support: ${ENABLE_PROBES}")
+message(STATUS "external probe collection: ${ENABLE_EXTERNAL_PROBES}")
 message(STATUS "SEAP msgid bit-size: ${SEAP_MSGID_BITS}")
 
 message(STATUS "")
@@ -421,13 +425,11 @@ message(STATUS "Solaris probes: ${ENABLE_PROBES_SOLARIS}")
 message(STATUS "  Solaris isainfo probe: ${OPENSCAP_PROBE_SOLARIS_ISAINFO}")
 message(STATUS " ")
 
-
 message(STATUS "Windows probes: ${ENABLE_PROBES_WINDOWS}")
 message(STATUS "  Windows accesstoken probe: ${OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN}")
 message(STATUS "  Windows registry probe: ${OPENSCAP_PROBE_WINDOWS_REGISTRY}")
 message(STATUS "  Windows wmi57 probe: ${OPENSCAP_PROBE_WINDOWS_WMI57}")
 message(STATUS " ")
-
 
 message(STATUS "Language bindings:")
 message(STATUS "python3 bindings: ${ENABLE_PYTHON3}")
@@ -515,6 +517,7 @@ if (MSVC)
 endif()
 
 if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe -W -Wall -Wnonnull -Wshadow -Wformat -Wundef -Wno-unused-parameter -Wmissing-prototypes -Wno-unknown-pragmas -D_GNU_SOURCE -std=c99")
 endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
@@ -537,29 +540,29 @@ if(APPLE)
 endif()
 
 include_directories(
-	"compat/"
-	"src/"
-	"src/common/"
-	"src/common/public/"
-	"src/CPE/public/"
-	"src/CVE/public/"
-	"src/CVRF/public/"
-	"src/CVSS/public/"
-	"src/DS/public/"
-	"src/OVAL/public/"
-	"src/OVAL/probes/public/"
-	"src/OVAL/probes/SEAP/"
-	"src/OVAL/probes/SEAP/public/"
-	"src/OVAL/"
-	"src/source/public/"
-	"src/XCCDF/"
-	"src/XCCDF/public/"
-	"src/XCCDF_POLICY/"
-	"src/XCCDF_POLICY/public/"
-	"yaml-filter/src/"
-	${CMAKE_BINARY_DIR} # config.h is generated to build directory
-	${LIBXML2_INCLUDE_DIR}
-	${PCRE_INCLUDE_DIRS}
+		"compat/"
+		"src/"
+		"src/common/"
+		"src/common/public/"
+		"src/CPE/public/"
+		"src/CVE/public/"
+		"src/CVRF/public/"
+		"src/CVSS/public/"
+		"src/DS/public/"
+		"src/OVAL/public/"
+		"src/OVAL/probes/public/"
+		"src/OVAL/probes/SEAP/"
+		"src/OVAL/probes/SEAP/public/"
+		"src/OVAL/"
+		"src/source/public/"
+		"src/XCCDF/"
+		"src/XCCDF/public/"
+		"src/XCCDF_POLICY/"
+		"src/XCCDF_POLICY/public/"
+		"yaml-filter/src/"
+		${CMAKE_BINARY_DIR} # config.h is generated to build directory
+		${LIBXML2_INCLUDE_DIR}
+		${PCRE_INCLUDE_DIRS}
 )
 
 # Honor visibility properties for all target types
@@ -572,11 +575,11 @@ endif()
 
 function(set_oscap_generic_properties TARGET_OBJECT)
 	set_target_properties(${TARGET_OBJECT} PROPERTIES
-		# Make global variables and functions HIDDEN by default.
-		C_VISIBILITY_PRESET hidden
-		CXX_VISIBILITY_PRESET hidden
-		POSITION_INDEPENDENT_CODE ON    # Compile this object code position independent.
-	)
+			# Make global variables and functions HIDDEN by default.
+			C_VISIBILITY_PRESET hidden
+			CXX_VISIBILITY_PRESET hidden
+			POSITION_INDEPENDENT_CODE ON    # Compile this object code position independent.
+			)
 	target_compile_definitions(${TARGET_OBJECT} PRIVATE OSCAP_BUILD_SHARED)
 endfunction()
 
@@ -597,26 +600,26 @@ add_subdirectory("swig")
 configure_file("run.in" ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/run @ONLY)
 configure_file("oscap_wrapper.in" ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/oscap_wrapper @ONLY)
 file(
-	COPY "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/run" "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/oscap_wrapper"
-	DESTINATION ${CMAKE_BINARY_DIR}
-	FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+		COPY "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/run" "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/oscap_wrapper"
+		DESTINATION ${CMAKE_BINARY_DIR}
+		FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 )
 
 if(NOT WIN32)
 	# pkgconfig file
 	configure_file("libopenscap.pc.in" "libopenscap.pc" @ONLY)
 	install(FILES
-		${CMAKE_CURRENT_BINARY_DIR}/libopenscap.pc
-		DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-	)
+			${CMAKE_CURRENT_BINARY_DIR}/libopenscap.pc
+			DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+			)
 endif()
 
 # changelog
 if(GIT_EXECUTABLE AND SED_EXECUTABLE)
 	add_custom_target(changelog
-		COMMAND "${GIT_EXECUTABLE}" log | "${SED_EXECUTABLE}" '/^commit/d\; /^Merge/d' > "${CMAKE_BINARY_DIR}/ChangeLog"
-		COMMENT "Generating ChangeLog"
-	)
+			COMMAND "${GIT_EXECUTABLE}" log | "${SED_EXECUTABLE}" '/^commit/d\; /^Merge/d' > "${CMAKE_BINARY_DIR}/ChangeLog"
+			COMMENT "Generating ChangeLog"
+			)
 endif()
 
 # Ctest
@@ -629,12 +632,12 @@ endif()
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "openscap-${OPENSCAP_VERSION}")
 set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_SOURCE_IGNORE_FILES
-	"\\\\.git.*"
-	"build/"
-	"build-win32/"
-	"~$"
-	"\\\\CMakeLists.txt.user"
-)
+		"\\\\.git.*"
+		"build/"
+		"build-win32/"
+		"~$"
+		"\\\\CMakeLists.txt.user"
+		)
 if(WIN32)
 	set(CPACK_GENERATOR WIX)
 	set(CPACK_WIX_PATCH_FILE "${CMAKE_SOURCE_DIR}/wix_patch.xml")

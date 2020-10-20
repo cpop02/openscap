@@ -114,7 +114,12 @@ struct oval_agent_session *cpe_session_lookup_oval_session(struct cpe_session *c
 			return NULL;
 		}
 
-		session = oval_agent_new_session(oval_model, prefixed_href);
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+		session = oval_agent_new_session(oval_model, prefixed_href, NULL);
+#else
+        session = oval_agent_new_session(oval_model, prefixed_href);
+#endif
+
 		if (session == NULL) {
 			oscap_seterr(OSCAP_EFAMILY_OSCAP, "Cannot create OVAL session for '%s' for CPE applicability checking", prefixed_href);
 			return NULL;

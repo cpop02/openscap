@@ -53,6 +53,10 @@
 #define X_OK 0
 #endif
 
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+#include "oval_probe_exec.h"
+#endif
+
 /*
  * Library side entity name cache. Initialization needs to be
  * thread-safe and is done by oval_probe_session_new. Freeing
@@ -140,22 +144,33 @@ int oval_probe_query_object(oval_probe_session_t *psess, struct oval_object *obj
 	if (out_syschar)
 		*out_syschar = sysc;
 
-	ph = oval_probe_handler_get(psess->ph, type);
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+	if(psess->eval == NULL) {
+#endif
+        ph = oval_probe_handler_get(psess->ph, type);
 
-	if (ph == NULL) {
-		char *msg = oscap_sprintf("OVAL object '%s_object' is not supported.", type_name);
+        if (ph == NULL) {
+            char *msg = oscap_sprintf("OVAL object '%s_object' is not supported.", type_name);
 
-		dW("%s", msg);
-		oval_syschar_add_new_message(sysc, msg, OVAL_MESSAGE_LEVEL_WARNING);
-		free(msg);
-		oval_syschar_set_flag(sysc, SYSCHAR_FLAG_NOT_COLLECTED);
+            dW("%s", msg);
+            oval_syschar_add_new_message(sysc, msg, OVAL_MESSAGE_LEVEL_WARNING);
+            free(msg);
+            oval_syschar_set_flag(sysc, SYSCHAR_FLAG_NOT_COLLECTED);
 
-		return 1;
+            return 1;
+        }
+
+        if ((ret = oval_probe_ext_handler(type, ph->uptr, PROBE_HANDLER_ACT_EVAL, sysc, flags)) != 0) {
+            return ret;
+        }
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+    } else {
+        ret = oval_probe_exec_ext_handler(psess, type, sysc);
+        if(ret != 0) {
+            return ret;
+        }
 	}
-
-	if ((ret = oval_probe_ext_handler(type, ph->uptr, PROBE_HANDLER_ACT_EVAL, sysc, flags)) != 0) {
-		return ret;
-	}
+#endif
 
 	if (!(flags & OVAL_PDFLAG_NOREPLY)) {
 		vm = oval_string_map_new();
@@ -175,23 +190,35 @@ int oval_probe_query_sysinfo(oval_probe_session_t *sess, struct oval_sysinfo **o
 
 	dI("Querying system information.");
 
-	ph = oval_probe_handler_get(sess->ph, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE);
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+	if(sess->eval == NULL) {
+#endif
+        ph = oval_probe_handler_get(sess->ph, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE);
 
         if (ph == NULL) {
-                oscap_seterr (OSCAP_EFAMILY_OVAL, "OVAL object not supported");
-		return(-1);
+            oscap_seterr (OSCAP_EFAMILY_OVAL, "OVAL object not supported");
+            return (-1);
         }
 
         if (ph->func == NULL) {
-                oscap_seterr (OSCAP_EFAMILY_OVAL, "OVAL object not correctly defined");
-		return(-1);
+            oscap_seterr (OSCAP_EFAMILY_OVAL, "OVAL object not correctly defined");
+            return (-1);
         }
 
         sysinf = NULL;
 
-	ret = oval_probe_sys_handler(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, ph->uptr, PROBE_HANDLER_ACT_EVAL, NULL, &sysinf, 0);
-	if (ret != 0)
-		return(ret);
+        ret = oval_probe_sys_handler(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, ph->uptr, PROBE_HANDLER_ACT_EVAL, NULL, &sysinf,
+                                     0);
+        if (ret != 0)
+            return (ret);
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+    } else {
+	    ret = oval_probe_exec_sys_handler(sess, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, &sysinf);
+	    if(ret != 0) {
+	        return ret;
+	    }
+	}
+#endif
 
 	*out_sysinfo = sysinf;
 	return(0);
