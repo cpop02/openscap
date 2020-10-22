@@ -8,11 +8,12 @@
 #include <probe-executor.h>
 
 #include "icache.h"
+#include "rcache.h"
 
 struct probe_executor {
     probe_executor_ctx_t ctx;
 
-    // TODO: Add request cache
+    probe_rcache_t *rcache;
     probe_icache_t *icache;
 };
 

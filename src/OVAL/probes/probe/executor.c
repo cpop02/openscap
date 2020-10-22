@@ -18,7 +18,9 @@
 
 extern bool OSCAP_GSYM(varref_handling);
 
+static int probe_executor_exec_nocache(probe_executor_t *exec, probe_request_t *req);
 static int probe_executor_eval_obj_ref(probe_executor_t *exec, SEXP_t *obj_ref, SEXP_t **out);
+static int probe_executor_eval_obj_ref_nocache(probe_executor_t *exec, SEXP_t *oid, SEXP_t **out);
 static int probe_executor_eval_set(probe_executor_t *exec, SEXP_t *set, SEXP_t **out, size_t depth);
 
 probe_executor_t* probe_executor_new(probe_executor_ctx_t *ctx) {
@@ -33,6 +35,10 @@ probe_executor_t* probe_executor_new(probe_executor_ctx_t *ctx) {
         goto fail;
     }
     exec->ctx = *ctx;
+    exec->rcache = probe_rcache_new();
+    if(exec->rcache == NULL) {
+        goto fail;
+    }
     exec->icache = probe_icache_new();
     if(exec->icache == NULL) {
         goto fail;
@@ -55,6 +61,9 @@ void probe_executor_free(probe_executor_t *exec) {
     dD("probe_executor: Freeing probe_executor");
 
     if(exec != NULL) {
+        if(exec->rcache != NULL) {
+            probe_rcache_free(exec->rcache);
+        }
         if(exec->icache != NULL) {
             probe_icache_free(exec->icache);
         }
@@ -68,6 +77,48 @@ int probe_executor_reset(probe_executor_t *exec) {
 }
 
 int probe_executor_exec(probe_executor_t *exec, probe_request_t *req) {
+    int ret = 0, cache_ret;
+    SEXP_t *oid = NULL, *out;
+
+    dD("probe_executor: Executing probe request");
+    dO(OSCAP_DEBUGOBJ_SEXP, req->probe_in);
+
+    __attribute__nonnull__(exec);
+    __attribute__nonnull__(req);
+    __attribute__nonnull__(req->probe_in);
+    __attribute__nonnull__(req->probe_out);
+
+    oid = probe_obj_getattrval(req->probe_in, "id");
+    if(oid == NULL) {
+        dE("probe_executor: Failed to get OVAL object ID");
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    out = probe_rcache_sexp_get(exec->rcache, oid);
+    if(out != NULL) {
+        dD("probe_executor: Serving request from cache");
+        *req->probe_out = out;
+        goto cleanup;
+    }
+    ret = probe_executor_exec_nocache(exec, req);
+    if(ret != 0) {
+        dE("probe_executor: Failed to execute request");
+        goto fail;
+    }
+    cache_ret = probe_rcache_sexp_add(exec->rcache, oid, *req->probe_out);
+    if(cache_ret != 0) {
+        // Don't fail the request
+        dE("probe_executor: Failed to add result to cache");
+    }
+
+fail:
+cleanup:
+    SEXP_free(oid);
+
+    return ret;
+}
+
+static int probe_executor_exec_nocache(probe_executor_t *exec, probe_request_t *req) {
     int ret;
     probe_ctx probe_ctx;
     SEXP_t *set = NULL, *cobj, *aux;
@@ -75,8 +126,6 @@ int probe_executor_exec(probe_executor_t *exec, probe_request_t *req) {
     SEXP_t *probe_in = NULL, *probe_out = NULL;
     probe_main_function_t probe_func;
     struct probe_varref_ctx *varref_ctx = NULL;
-
-    dD("probe_executor: Executing probe request");
 
     __attribute__nonnull__(exec);
     __attribute__nonnull__(req);
@@ -191,7 +240,7 @@ cleanup:
 
 static int probe_executor_eval_obj_ref(probe_executor_t *exec, SEXP_t *obj_ref, SEXP_t **out) {
     int ret = 0;
-    SEXP_t *oid = NULL, *obj = NULL;
+    SEXP_t *oid = NULL, *obj;
 
     dD("probe_executor: Evaluating object reference");
     dO(OSCAP_DEBUGOBJ_SEXP, obj_ref);
@@ -200,33 +249,72 @@ static int probe_executor_eval_obj_ref(probe_executor_t *exec, SEXP_t *obj_ref, 
     __attribute__nonnull__(obj_ref);
     __attribute__nonnull__(out);
 
-    if(exec->ctx.probe_cmd_handlers.obj_eval == NULL) {
-        dE("probe_executor: No object reference evaluation handler provided");
-        ret = PROBE_EOPNOTSUPP;
-        goto fail;
-    }
-
     oid = probe_ent_getval(obj_ref);
     if(oid == NULL) {
         dE("probe_executor: Failed to get object reference entity value");
         ret = PROBE_EUNKNOWN;
         goto fail;
     }
-    obj = exec->ctx.probe_cmd_handlers.obj_eval(oid, exec->ctx.probe_cmd_handler_arg);
-    if(obj == NULL) {
+    obj = probe_rcache_sexp_get(exec->rcache, oid);
+    if(obj != NULL) {
+        dD("probe_executor: Serving object reference from cache");
+        *out = obj;
+        goto cleanup;
+    }
+    ret = probe_executor_eval_obj_ref_nocache(exec, oid, out);
+    if(ret != 0) {
+        dE("probe_executor: Failed to evaluate object reference");
+    }
+
+fail:
+cleanup:
+    SEXP_free(oid);
+
+    return ret;
+}
+
+static int probe_executor_eval_obj_ref_nocache(probe_executor_t *exec, SEXP_t *oid, SEXP_t **out) {
+    int ret = 0;
+    SEXP_t *res = NULL, *roid = NULL, *obj;
+
+    __attribute__nonnull__(exec);
+    __attribute__nonnull__(oid);
+    __attribute__nonnull__(out);
+
+    if(exec->ctx.probe_cmd_handlers.obj_eval == NULL) {
+        dE("probe_executor: No object reference evaluation handler provided");
+        ret = PROBE_EOPNOTSUPP;
+        goto fail;
+    }
+    res = exec->ctx.probe_cmd_handlers.obj_eval(oid, exec->ctx.probe_cmd_handler_arg);
+    if(res == NULL) {
         dE("probe_executor: Object reference evaluation handler failed");
         ret = PROBE_EUNKNOWN;
         goto fail;
     }
+    roid = SEXP_list_first(res);
+    if(roid == NULL) {
+        dE("probe_executor: Failed to get OID from object reference evaluation result");
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    if(SEXP_string_cmp(oid, roid) != 0) {
+        dE("probe_executor: Unexpected OID in object reference evaluation result");
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
+    obj = probe_rcache_sexp_get(exec->rcache, oid);
+    if(obj == NULL) {
+        dE("probe_executor: Object reference evaluation result not found in cache");
+        ret = PROBE_EUNKNOWN;
+        goto fail;
+    }
 
-    dD("probe_executor: Object reference evaluation output");
-    dO(OSCAP_DEBUGOBJ_SEXP, obj);
-
-    ret = PROBE_EOPNOTSUPP;
+    *out = obj;
 
 fail:
-    SEXP_free(obj);
-    SEXP_free(oid);
+    SEXP_free(roid);
+    SEXP_free(res);
 
     return ret;
 }
