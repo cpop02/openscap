@@ -30,9 +30,6 @@
 #ifndef _OVAL_PROBE_SESSION
 #define _OVAL_PROBE_SESSION
 
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-#include <external_probe_executor.h>
-#endif
 #include "public/oval_probe_session.h"
 #include "_oval_probe_handler.h"
 #include "oval_probe_ext.h"
@@ -43,15 +40,14 @@
  * during the initialization and all evaluations are done relative to this model.
  */
 struct oval_probe_session {
+    oval_phtbl_t *ph;   /**< probe handler table */
+    oval_pext_t  *pext; /**< state information associated with external probes */
+    struct oval_syschar_model *sys_model; /**< system characteristics model */
+    char         *dir;  /**< probe session directory */
+    uint32_t      flg;  /**< probe session flags */
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    oval_evaluation_t *eval;
-    external_probe_executor_t *exec;
+    void *pdata;
 #endif
-        oval_phtbl_t *ph;   /**< probe handler table */
-        oval_pext_t  *pext; /**< state information associated with external probes */
-        struct oval_syschar_model *sys_model; /**< system characteristics model */
-        char         *dir;  /**< probe session directory */
-        uint32_t      flg;  /**< probe session flags */
 };
 
 #endif /* _OVAL_PROBE_SESSION */

@@ -36,7 +36,7 @@
 #include <pthread.h>
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
 #include <oval_evaluation.h>
-#include "external_probe_executor.h"
+#include "executor.h"
 #endif
 #include "_seap.h"
 #include "ncache.h"
@@ -83,8 +83,8 @@ typedef struct {
 
 struct probe_ctx {
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    oval_evaluation_t *eval;
-    external_probe_request_t *req;
+    void *probe_data;
+    oval_subtype_t probe_type;
 #endif
     SEXP_t         *probe_in;  /**< S-exp representation of the input object */
     SEXP_t         *probe_out; /**< collected object */

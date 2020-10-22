@@ -53,10 +53,6 @@
 #define X_OK 0
 #endif
 
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-#include "oval_probe_exec.h"
-#endif
-
 /*
  * Library side entity name cache. Initialization needs to be
  * thread-safe and is done by oval_probe_session_new. Freeing
@@ -102,9 +98,9 @@ int oval_probe_query_object(oval_probe_session_t *psess, struct oval_object *obj
 {
 	char *oid;
 	struct oval_syschar *sysc;
-        oval_subtype_t type;
+    oval_subtype_t type;
 	const char *type_name;
-        oval_ph_t *ph;
+    oval_ph_t *ph;
 	struct oval_string_map *vm;
 	struct oval_syschar_model *model;
 	int ret;
@@ -145,31 +141,27 @@ int oval_probe_query_object(oval_probe_session_t *psess, struct oval_object *obj
 		*out_syschar = sysc;
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-	if(psess->eval == NULL) {
-#endif
-        ph = oval_probe_handler_get(psess->ph, type);
+    ret = oval_probe_ext_handler_exec(psess->pext, type, sysc);
+    if(ret != 0) {
+        return ret;
+    }
+#else
+    ph = oval_probe_handler_get(psess->ph, type);
 
-        if (ph == NULL) {
-            char *msg = oscap_sprintf("OVAL object '%s_object' is not supported.", type_name);
+    if (ph == NULL) {
+        char *msg = oscap_sprintf("OVAL object '%s_object' is not supported.", type_name);
 
-            dW("%s", msg);
-            oval_syschar_add_new_message(sysc, msg, OVAL_MESSAGE_LEVEL_WARNING);
-            free(msg);
-            oval_syschar_set_flag(sysc, SYSCHAR_FLAG_NOT_COLLECTED);
+        dW("%s", msg);
+        oval_syschar_add_new_message(sysc, msg, OVAL_MESSAGE_LEVEL_WARNING);
+        free(msg);
+        oval_syschar_set_flag(sysc, SYSCHAR_FLAG_NOT_COLLECTED);
 
-            return 1;
-        }
+        return 1;
+    }
 
-        if ((ret = oval_probe_ext_handler(type, ph->uptr, PROBE_HANDLER_ACT_EVAL, sysc, flags)) != 0) {
-            return ret;
-        }
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    } else {
-        ret = oval_probe_exec_ext_handler(psess, type, sysc);
-        if(ret != 0) {
-            return ret;
-        }
-	}
+    if ((ret = oval_probe_ext_handler(type, ph->uptr, PROBE_HANDLER_ACT_EVAL, sysc, flags)) != 0) {
+        return ret;
+    }
 #endif
 
 	if (!(flags & OVAL_PDFLAG_NOREPLY)) {
@@ -184,43 +176,39 @@ int oval_probe_query_object(oval_probe_session_t *psess, struct oval_object *obj
 
 int oval_probe_query_sysinfo(oval_probe_session_t *sess, struct oval_sysinfo **out_sysinfo)
 {
+    int ret;
 	struct oval_sysinfo *sysinf;
-        oval_ph_t *ph;
-	int ret;
+    oval_ph_t *ph;
 
 	dI("Querying system information.");
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-	if(sess->eval == NULL) {
-#endif
-        ph = oval_probe_handler_get(sess->ph, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE);
+    ret = oval_probe_sys_handler_exec(sess->pext, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, &sysinf);
+    if(ret != 0) {
+        return ret;
+    }
+#else
+    ph = oval_probe_handler_get(sess->ph, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE);
 
-        if (ph == NULL) {
-            oscap_seterr (OSCAP_EFAMILY_OVAL, "OVAL object not supported");
-            return (-1);
-        }
+    if (ph == NULL) {
+        oscap_seterr (OSCAP_EFAMILY_OVAL, "OVAL object not supported");
+        return (-1);
+    }
 
-        if (ph->func == NULL) {
-            oscap_seterr (OSCAP_EFAMILY_OVAL, "OVAL object not correctly defined");
-            return (-1);
-        }
+    if (ph->func == NULL) {
+        oscap_seterr (OSCAP_EFAMILY_OVAL, "OVAL object not correctly defined");
+        return (-1);
+    }
 
-        sysinf = NULL;
+    sysinf = NULL;
 
-        ret = oval_probe_sys_handler(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, ph->uptr, PROBE_HANDLER_ACT_EVAL, NULL, &sysinf,
-                                     0);
-        if (ret != 0)
-            return (ret);
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    } else {
-	    ret = oval_probe_exec_sys_handler(sess, OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, &sysinf);
-	    if(ret != 0) {
-	        return ret;
-	    }
-	}
+    ret = oval_probe_sys_handler(OVAL_INDEPENDENT_SYSCHAR_SUBTYPE, ph->uptr, PROBE_HANDLER_ACT_EVAL, NULL, &sysinf, 0);
+    if (ret != 0)
+        return (ret);
 #endif
 
 	*out_sysinfo = sysinf;
+
 	return(0);
 }
 

@@ -62,7 +62,7 @@ typedef struct oval_agent_session oval_agent_session_t;
  * @param name Name of file that can be referenced from XCCDF Benchmark
  */
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-OSCAP_API oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name, oval_evaluation_t *eval);
+OSCAP_API oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name, void *pdata);
 #else
 OSCAP_API oval_agent_session_t * oval_agent_new_session(struct oval_definition_model * model, const char * name);
 #endif

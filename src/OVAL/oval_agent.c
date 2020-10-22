@@ -66,9 +66,6 @@ struct oval_agent_session {
 	struct oval_results_model    * res_model;
 	oval_probe_session_t  * psess;
 #endif
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-	oval_evaluation_t *eval;
-#endif
 };
 
 
@@ -96,7 +93,7 @@ static const struct oval_result_to_xccdf_spec XCCDF_OVAL_RESULTS_MAP[] = {
 };
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *model, const char * name, oval_evaluation_t *eval) {
+oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *model, const char * name, void *pdata) {
 #else
 oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *model, const char * name) {
 #endif
@@ -114,16 +111,14 @@ oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *mode
 	ag_sess->def_model = model;
 	ag_sess->cur_var_model = NULL;
 	ag_sess->sys_model = oval_syschar_model_new(model);
-#ifdef OVAL_PROBES_ENABLED
+
+#if defined(OVAL_PROBES_ENABLED)
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-	ag_sess->eval = eval;
-    ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model, eval);
+    ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model, pdata);
 #else
     ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model);
 #endif
-#endif
 
-#if defined(OVAL_PROBES_ENABLED)
 	/* probe sysinfo */
 	ret = oval_probe_query_sysinfo(ag_sess->psess, &sysinfo);
 	if (ret != 0) {

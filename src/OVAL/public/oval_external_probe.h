@@ -18,7 +18,7 @@ typedef struct oval_external_probe_result oval_external_probe_result_t;
 struct oval_external_probe_item_iterator;
 struct oval_external_probe_item_list_iterator;
 
-typedef oval_external_probe_result_t* (*oval_external_probe_function_t)(void *eval_ctx, oval_subtype_t probe_type, char *oval_id);
+typedef oval_external_probe_result_t* (*oval_external_probe_handler_t)(void *eval_ctx, oval_subtype_t probe_type, char *oval_id);
 
 OSCAP_API oval_external_probe_item_value_t* oval_external_probe_item_value_new_string(char* val);
 OSCAP_API oval_external_probe_item_value_t* oval_external_probe_item_value_new_stringf(char* fmt, ...);

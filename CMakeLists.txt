@@ -245,6 +245,7 @@ if (WIN32)
 	set(IS_WIN32 TRUE)
 endif()
 cmake_dependent_option(ENABLE_PROBES_WINDOWS "build OVAL probes for the Windows OVAL tests" ${IS_WIN32} "ENABLE_PROBES; NOT ENABLE_EXTERNAL_PROBES" OFF)
+cmake_dependent_option(ENABLE_PROBES_EXTERNAL "build external OVAL probes" ${IS_WIN32} "ENABLE_EXTERNAL_PROBES" OFF)
 
 # INDEPENDENT PROBES
 cmake_dependent_option(OPENSCAP_PROBE_INDEPENDENT_ENVIRONMENTVARIABLE "Independent environmentvariable probe" ON "ENABLE_PROBES_INDEPENDENT; NOT WIN32; NOT ENABLE_EXTERNAL_PROBES" OFF)
@@ -299,6 +300,9 @@ cmake_dependent_option(OPENSCAP_PROBE_SOLARIS_ISAINFO "Solaris isainfo probe" ON
 cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN "Windows accesstoken probe" ON "ENABLE_PROBES_WINDOWS; NOT ENABLE_EXTERNAL_PROBES" OFF)
 cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_REGISTRY "Windows registry probe" ON "ENABLE_PROBES_WINDOWS; NOT ENABLE_EXTERNAL_PROBES" OFF)
 cmake_dependent_option(OPENSCAP_PROBE_WINDOWS_WMI57 "Windows wmi57 probe" ON "ENABLE_PROBES_WINDOWS; NOT ENABLE_EXTERNAL_PROBES" OFF)
+
+# EXTERNAL PROBES
+cmake_dependent_option(OPENSCAP_PROBE_EXTERNAL_DEFAULT "External default probe" ON "ENABLE_PROBES_EXTERNAL" OFF)
 
 # ---------- EXECUTABLES / UTILITIES SWITCHES
 
@@ -364,7 +368,7 @@ message(STATUS " ")
 
 message(STATUS "OVAL:")
 message(STATUS "base probe support: ${ENABLE_PROBES}")
-message(STATUS "external probe collection: ${ENABLE_EXTERNAL_PROBES}")
+message(STATUS "external probe support: ${ENABLE_EXTERNAL_PROBES}")
 message(STATUS "SEAP msgid bit-size: ${SEAP_MSGID_BITS}")
 
 message(STATUS "")
@@ -429,6 +433,10 @@ message(STATUS "Windows probes: ${ENABLE_PROBES_WINDOWS}")
 message(STATUS "  Windows accesstoken probe: ${OPENSCAP_PROBE_WINDOWS_ACCESSTOKEN}")
 message(STATUS "  Windows registry probe: ${OPENSCAP_PROBE_WINDOWS_REGISTRY}")
 message(STATUS "  Windows wmi57 probe: ${OPENSCAP_PROBE_WINDOWS_WMI57}")
+message(STATUS " ")
+
+message(STATUS "External probes: ${ENABLE_PROBES_EXTERNAL}")
+message(STATUS "  External probe: ${OPENSCAP_PROBE_EXTERNAL_DEFAULT}")
 message(STATUS " ")
 
 message(STATUS "Language bindings:")

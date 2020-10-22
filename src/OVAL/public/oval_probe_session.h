@@ -35,16 +35,12 @@ typedef struct oval_probe_session oval_probe_session_t;
 #include "oval_system_characteristics.h"
 #include "oscap_export.h"
 
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-#include <oval_evaluation.h>
-#endif
-
 /**
  * Create and initialize a new probe session
  * @param model system characteristics model
  */
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, oval_evaluation_t *eval);
+OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model, void *probe_data);
 #else
 OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model *model);
 #endif
@@ -53,7 +49,11 @@ OSCAP_API oval_probe_session_t *oval_probe_session_new(struct oval_syschar_model
  * Reinitialize already allocated probe session inplace
  * @param model system characteristics model
  */
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+OSCAP_API int oval_probe_session_reinit(oval_probe_session_t *sess, struct oval_syschar_model *model);
+#else
 OSCAP_API void oval_probe_session_reinit(oval_probe_session_t *sess, struct oval_syschar_model *model);
+#endif
 
 /**
  * Destroy probe session. All state information created during the lifetime

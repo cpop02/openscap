@@ -25,6 +25,9 @@
 #include "_seap.h"
 #include <pthread.h>
 #include <stdbool.h>
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+#include <probe-executor.h>
+#endif
 #include "oval_probe_impl.h"
 #include "oval_system_characteristics_impl.h"
 #include "common/util.h"
@@ -50,12 +53,23 @@ struct oval_pext {
 
         void *sess_ptr;
         struct oval_syschar_model **model;
+
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+        probe_executor_t *pexec;
+#endif
 };
 
 typedef struct oval_pext oval_pext_t;
 
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+oval_pext_t *oval_pext_new(void *sess_ptr, struct oval_syschar_model **model, void *probe_data);
+#else
 oval_pext_t *oval_pext_new(void);
+#endif
 void oval_pext_free(oval_pext_t *pext);
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+int oval_pext_reset(oval_pext_t *pext);
+#endif
 int oval_probe_ext_init(oval_pext_t *pext);
 int oval_probe_ext_eval(SEAP_CTX_t *ctx, oval_pd_t *pd, oval_pext_t *pext, struct oval_syschar *syschar, int flags);
 int oval_probe_ext_reset(SEAP_CTX_t *ctx, oval_pd_t *pd, oval_pext_t *pext);
@@ -63,5 +77,10 @@ int oval_probe_ext_abort(SEAP_CTX_t *ctx, oval_pd_t *pd, oval_pext_t *pext);
 
 int oval_probe_ext_handler(oval_subtype_t type, void *ptr, int act, ...);
 int oval_probe_sys_handler(oval_subtype_t type, void *ptr, int act, ...);
+
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+int oval_probe_sys_handler_exec(oval_pext_t *pext, oval_subtype_t type, struct oval_sysinfo **out);
+int oval_probe_ext_handler_exec(oval_pext_t *pext, oval_subtype_t type, struct oval_syschar *out);
+#endif
 
 #endif /* OVAL_PROBE_EXT_H */

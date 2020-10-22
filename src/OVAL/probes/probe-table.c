@@ -203,6 +203,10 @@
 #include "windows/wmi57_probe.h"
 #endif
 
+#ifdef OPENSCAP_PROBE_EXTERNAL_DEFAULT
+#include "external/default_probe.h"
+#endif
+
 typedef struct probe_table_entry {
 	oval_subtype_t type;
 	probe_init_function_t probe_init_function;
@@ -345,13 +349,20 @@ static const probe_table_entry_t probe_table[] = {
 #ifdef OPENSCAP_PROBE_WINDOWS_WMI57
 	{OVAL_WINDOWS_WMI_57, NULL, wmi57_probe_main, NULL, NULL},
 #endif
+#ifdef OPENSCAP_PROBE_EXTERNAL_DEFAULT
+    {OVAL_SUBTYPE_ALL, NULL, default_probe_main, NULL, NULL},
+#endif
 	{OVAL_SUBTYPE_UNKNOWN, NULL, NULL, NULL, NULL}
 };
 
 static const probe_table_entry_t *probe_table_get(oval_subtype_t type)
 {
 	const probe_table_entry_t *entry = probe_table;
+#ifdef OPENSCAP_PROBE_EXTERNAL_DEFAULT
+    while (entry->probe_main_function != NULL && entry->type != type && entry->type != OVAL_SUBTYPE_ALL)
+#else
 	while (entry->probe_main_function != NULL && entry->type != type)
+#endif
 	{
 		entry++;
 	}

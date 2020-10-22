@@ -64,6 +64,11 @@ if (ENABLE_PROBES)
 			$<TARGET_OBJECTS:windows_probes_object>
 		)
 	endif()
+	if (ENABLE_PROBES_EXTERNAL)
+		list(APPEND OBJECTS_TO_LINK_AGAINST
+			$<TARGET_OBJECTS:external_probes_object>
+		)
+	endif()
 endif()
 if (HAVE_MMAN_H AND (GCRYPT_FOUND OR NSS_FOUND))
 	list(APPEND OBJECTS_TO_LINK_AGAINST

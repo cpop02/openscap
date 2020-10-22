@@ -14,8 +14,8 @@
 static const char *oscap_productname = "cpe:/a:open-scap:oscap";
 
 struct oval_evaluation {
-    void *ext_probe_ctx;
-    oval_external_probe_function_t ext_probe_func;
+    void *probe_data;
+    oval_external_probe_handler_t probe_handler;
 };
 
 struct oval_evaluator {
@@ -31,15 +31,15 @@ static int oval_evaluator_load_definitions(oval_evaluator_t *evaluator);
 
 static oval_agent_session_t *oval_evaluator_new_agent_session(oval_evaluator_t *evaluator, oval_evaluation_t *eval);
 
-oval_evaluation_t* oval_evaluation_new(void *ext_probe_ctx, oval_external_probe_function_t ext_probe_func) {
+oval_evaluation_t* oval_evaluation_new(void *ext_probe_ctx, oval_external_probe_handler_t ext_probe_func) {
     oval_evaluation_t *eval;
 
     eval = (oval_evaluation_t*)malloc(sizeof(oval_evaluation_t));
     if(eval == NULL) {
         goto fail;
     }
-    eval->ext_probe_ctx = ext_probe_ctx;
-    eval->ext_probe_func = ext_probe_func;
+    eval->probe_data = ext_probe_ctx;
+    eval->probe_handler = ext_probe_func;
 
     goto cleanup;
 
@@ -55,16 +55,16 @@ void oval_evaluation_free(oval_evaluation_t *eval) {
     free(eval);
 }
 
-void* oval_evaluation_get_external_probe_ctx(oval_evaluation_t *eval) {
+void* oval_evaluation_get_probe_data(oval_evaluation_t *eval) {
     __attribute__nonnull__(eval);
 
-    return eval->ext_probe_ctx;
+    return eval->probe_data;
 }
 
-oval_external_probe_function_t oval_evaluation_get_external_probe_func(oval_evaluation_t *eval) {
+oval_external_probe_handler_t oval_evaluation_get_probe_handler(oval_evaluation_t *eval) {
     __attribute__nonnull__(eval);
 
-    return eval->ext_probe_func;
+    return eval->probe_handler;
 }
 
 oval_evaluator_t* oval_evaluator_new(const char *filename) {
@@ -101,7 +101,7 @@ void oval_evaluator_free(oval_evaluator_t *evaluator) {
 }
 
 
-int oval_evaluator_do(oval_evaluator_t *evaluator, oval_evaluation_t *eval) {
+int oval_evaluator_eval(oval_evaluator_t *evaluator, oval_evaluation_t *eval) {
     int ret;
     oval_agent_session_t *session;
 

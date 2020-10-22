@@ -2,34 +2,40 @@
 // Created by Cristian Pop on 19/10/2020.
 //
 
-#include <OVAL/probes/SEAP/public/sexp.h>
-#include <common/debug_priv.h>
+#include <sexp.h>
+#include <debug_priv.h>
 #include <oval_external_probe.h>
 #include <oval_evaluation.h>
 #include <probe-api.h>
 
-#include "external_probe.h"
-#include "probe.h"
+#include "default_probe.h"
+#include "OVAL/probes/probe/probe.h"
 
 static int probe_collect_external_probe_items(probe_ctx *ctx, oval_subtype_t type, oval_syschar_status_t status, oval_external_probe_item_list_t *ext_items);
 static int probe_collect_external_probe_item(probe_ctx *ctx, oval_subtype_t type, oval_syschar_status_t status, oval_external_probe_item_t *ext_item);
 
-int external_probe_main(probe_ctx *ctx, void *arg) {
+int default_probe_main(probe_ctx *ctx, void *arg) {
     int ret;
-    void *ext_probe_ctx;
-    oval_subtype_t ext_probe_type;
-    oval_external_probe_function_t ext_probe_func;
     char *str_id = NULL;
+    void *ext_probe_data;
     SEXP_t *in, *id = NULL;
+    oval_evaluation_t *eval;
     oval_syschar_status_t status;
     oval_external_probe_result_t *ext_res = NULL;
     oval_external_probe_item_list_t *ext_items;
+    oval_external_probe_handler_t ext_probe_handler;
 
-    dD("external_probe: Handling request");
+    dD("default_probe: Handling external probe");
 
     __attribute__nonnull__(ctx);
-    __attribute__nonnull__(ctx->eval);
-    __attribute__nonnull__(ctx->req);
+
+    if(ctx->probe_data == NULL) {
+        dW("default_probe: No probe data provided");
+        ret = PROBE_EOPNOTSUPP;
+        goto fail;
+    }
+    eval = (oval_evaluation_t*)ctx->probe_data;
+
 
     in = probe_ctx_getobject(ctx);
     id = probe_obj_getattrval(in, "id");
@@ -42,18 +48,22 @@ int external_probe_main(probe_ctx *ctx, void *arg) {
         ret = PROBE_EUNKNOWN;
         goto fail;
     }
-    ext_probe_ctx = oval_evaluation_get_external_probe_ctx(ctx->eval);
-    ext_probe_type = ctx->req->probe_type;
-    ext_probe_func = oval_evaluation_get_external_probe_func(ctx->eval);
-    ext_res = ext_probe_func(ext_probe_ctx, ctx->req->probe_type, str_id);
+    ext_probe_data = oval_evaluation_get_probe_data(eval);
+    ext_probe_handler = oval_evaluation_get_probe_handler(eval);
+    if(ext_probe_handler == NULL) {
+        dW("default_probe: No external probe handler provided");
+        ret = PROBE_EOPNOTSUPP;
+        goto fail;
+    }
+    ext_res = ext_probe_handler(ext_probe_data, ctx->probe_type, str_id);
     if(ext_res == NULL) {
-        dE("external_probe: External probe failed");
+        dE("default_probe: External probe handler failed");
         ret = PROBE_EUNKNOWN;
         goto fail;
     }
     status = oval_external_probe_result_get_status(ext_res);
     ext_items = oval_external_probe_result_get_items(ext_res);
-    ret = probe_collect_external_probe_items(ctx, ext_probe_type, status, ext_items);
+    ret = probe_collect_external_probe_items(ctx, ctx->probe_type, status, ext_items);
 
 fail:
     oval_external_probe_result_free(ext_res);

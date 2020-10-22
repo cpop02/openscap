@@ -88,8 +88,6 @@ if (ENABLE_PROBES)
 		"oval_external_probe_item.c"
 		"oval_external_probe_item_list.c"
 		"oval_external_probe_result.c"
-		"oval_probe_exec.h"
-		"oval_probe_exec.c"
 		)
 	endif()
 endif()
