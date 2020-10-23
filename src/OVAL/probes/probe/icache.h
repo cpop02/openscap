@@ -55,6 +55,13 @@ typedef struct {
         uint16_t        queue_end;
         uint16_t        queue_cnt;
         uint16_t        queue_max;
+
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+#ifndef HAVE_ATOMIC_BUILTINS
+        pthread_mutex_t queue_mutex_next_id;
+#endif
+        volatile uint32_t next_id;
+#endif
 } probe_icache_t;
 
 typedef struct {

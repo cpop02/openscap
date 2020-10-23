@@ -114,7 +114,13 @@ oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *mode
 
 #if defined(OVAL_PROBES_ENABLED)
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model, pdata);
+    ag_sess->psess = oval_probe_session_new(ag_sess->sys_model, pdata);
+    if(ag_sess->psess == NULL) {
+        oval_syschar_model_free(ag_sess->sys_model);
+        free(ag_sess->filename);
+        free(ag_sess);
+        return NULL;
+    }
 #else
     ag_sess->psess     = oval_probe_session_new(ag_sess->sys_model);
 #endif
@@ -124,6 +130,7 @@ oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *mode
 	if (ret != 0) {
 		oval_probe_session_destroy(ag_sess->psess);
 		oval_syschar_model_free(ag_sess->sys_model);
+		free(ag_sess->filename);
 		free(ag_sess);
 		return NULL;
 	}

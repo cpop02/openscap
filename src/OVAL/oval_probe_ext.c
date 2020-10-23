@@ -77,7 +77,7 @@ oval_pext_t *oval_pext_new(void *sess_ptr, struct oval_syschar_model **model, vo
     }
     pext->sess_ptr = sess_ptr;
     pext->model = model;
-    probe_executor_ctx_t pexec_desc = {
+    probe_executor_ctx_t pexec_ctx = {
         .probe_data = pdata,
         .probe_cmd_handler_arg = pext,
         .probe_cmd_handlers = {
@@ -85,12 +85,10 @@ oval_pext_t *oval_pext_new(void *sess_ptr, struct oval_syschar_model **model, vo
                 .ste_fetch = oval_probe_cmd_ste_fetch,
         }
     };
-    pext->pexec = probe_executor_new(&pexec_desc);
-    if(pext->pexec == NULL) {
-        goto fail;
+    pext->pexec = probe_executor_new(&pexec_ctx);
+    if(pext->pexec != NULL) {
+        goto cleanup;
     }
-
-    goto cleanup;
 
 fail:
     oval_pext_free(pext);
