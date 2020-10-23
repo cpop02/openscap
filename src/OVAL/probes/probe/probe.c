@@ -29,6 +29,10 @@
 #include "probe-api.h"
 #include "probe.h"
 
+#define MAX_SET_EVAL_DEPTH 8
+#define MAX_SET_EVAL_OBJS 2
+#define MAX_SET_EVAL_SETS 2
+
 SEXP_t *probe_ctx_getobject(probe_ctx *ctx)
 {
         return (ctx->probe_in);
@@ -184,6 +188,66 @@ int probe_varref_iterate_ctx(struct probe_varref_ctx *ctx)
     SEXP_free(r2);
 
     return 1;
+}
+
+SEXP_t *probe_set_apply_filters(SEXP_t *cobj, SEXP_t *filters)
+{
+    SEXP_t *result_items, *items, *item, *mask;
+    oval_syschar_status_t item_status;
+    oval_syschar_collection_flag_t flag;
+
+    result_items = SEXP_list_new(NULL);
+    flag = probe_cobj_get_flag(cobj);
+    items = probe_cobj_get_items(cobj);
+    mask = probe_cobj_get_mask(cobj);
+
+    SEXP_list_foreach(item, items) {
+        item_status = probe_ent_getstatus(item);
+
+        switch (item_status) {
+            case SYSCHAR_STATUS_DOES_NOT_EXIST:
+                continue;
+            case SYSCHAR_STATUS_ERROR:
+                break;
+            case SYSCHAR_STATUS_NOT_COLLECTED:
+            {
+                SEXP_t *r0, *r1;
+
+                r0 = probe_msg_creatf(OVAL_MESSAGE_LEVEL_ERROR,
+                                      "Supplied item has an invalid status: %d.", item_status);
+                r1 = SEXP_list_new(r0, NULL);
+                cobj = probe_cobj_new(SYSCHAR_FLAG_ERROR, r1, NULL, NULL);
+                SEXP_free(items);
+                SEXP_free(item);
+                SEXP_free(result_items);
+                SEXP_free(r0);
+                SEXP_free(r1);
+                SEXP_free(mask);
+                return cobj;
+            }
+            default:
+                break;
+        }
+
+        if (!probe_item_filtered(item, filters)) {
+            SEXP_list_add(result_items, item);
+        }
+    }
+
+    /*
+     * If the collected information is complete but all the items are
+     * filtered out, the flag is set to SYSCHAR_FLAG_DOES_NOT_EXIST
+     */
+    if (flag == SYSCHAR_FLAG_COMPLETE
+        && SEXP_list_length(result_items) == 0)
+        flag = SYSCHAR_FLAG_DOES_NOT_EXIST;
+
+    cobj = probe_cobj_new(flag, NULL, result_items, mask);
+    SEXP_free(items);
+    SEXP_free(result_items);
+    SEXP_free(mask);
+
+    return cobj;
 }
 
 SEXP_t *probe_set_combine(SEXP_t *cobj0, SEXP_t *cobj1, oval_setobject_operation_t op)

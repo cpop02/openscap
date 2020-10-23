@@ -118,6 +118,7 @@ int probe_varref_create_ctx(const SEXP_t *probe_in, SEXP_t *varrefs, struct prob
 void probe_varref_destroy_ctx(struct probe_varref_ctx *ctx);
 int probe_varref_iterate_ctx(struct probe_varref_ctx *ctx);
 
+SEXP_t *probe_set_apply_filters(SEXP_t *cobj, SEXP_t *filters);
 SEXP_t *probe_set_combine(SEXP_t *cobj0, SEXP_t *cobj1, oval_setobject_operation_t op);
 
 #endif /* PROBE_H */
