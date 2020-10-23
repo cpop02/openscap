@@ -77,22 +77,22 @@ static void probe_icache_item_setID(SEXP_t *item) {
 #endif
 #else
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    if((errno = pthread_mutex_lock(&cache->queue_mutex_next_id)) != 0) {
+    if(pthread_mutex_lock(&cache->queue_mutex_next_id) != 0) {
             dE("Can't lock the next_ID_mutex: %u, %s", errno, strerror(errno));
             abort();
     }
     local_id = ++cache->next_id;
-    if((errno = pthread_mutex_unlock(&cache->queue_mutex_next_id)) != 0) {
+    if(pthread_mutex_unlock(&cache->queue_mutex_next_id) != 0) {
             dE("Can't unlock the next_ID_mutex: %u, %s", errno, strerror(errno));
             abort();
     }
 #else
-    if((errno = pthread_mutex_lock(&next_ID_mutex)) != 0) {
+    if(pthread_mutex_lock(&next_ID_mutex) != 0) {
             dE("Can't lock the next_ID_mutex: %u, %s", errno, strerror(errno));
             abort();
     }
     local_id = ++next_ID;
-    if((errno = pthread_mutex_unlock(&next_ID_mutex)) != 0) {
+    if(pthread_mutex_unlock(&next_ID_mutex) != 0) {
             dE("Can't unlock the next_ID_mutex: %u, %s", errno, strerror(errno));
             abort();
     }
@@ -209,12 +209,12 @@ static void *probe_icache_worker(void *arg) {
     probe_iqpair_t *pair, pair_mem;
     SEXP_ID_t       item_ID;
 
-	if (cache == NULL) {
+	if(cache == NULL) {
 		return NULL;
 	}
 
 #if defined(HAVE_PTHREAD_SETNAME_NP)
-const char* thread_name = "icache_worker";
+    const char* thread_name = "icache_worker";
 # if defined(OS_APPLE)
 	pthread_setname_np(thread_name);
 # else
@@ -222,131 +222,123 @@ const char* thread_name = "icache_worker";
 # endif
 #endif
 
-        if (pthread_mutex_lock(&cache->queue_mutex) != 0) {
-                dE("An error ocured while locking the queue mutex: %u, %s",
-                   errno, strerror(errno));
-                return (NULL);
-        }
+    if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
+            dE("An error ocured while locking the queue mutex: %u, %s", errno, strerror(errno));
+            return (NULL);
+    }
 
 	pair = &pair_mem;
-        dD("icache worker ready");
+    dD("icache worker ready");
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-        switch (errno = pthread_barrier_wait(&cache->queue_barrier))
+    switch(pthread_barrier_wait(&cache->queue_barrier))
 #else
-        switch (errno = pthread_barrier_wait(&OSCAP_GSYM(th_barrier)))
+    switch(pthread_barrier_wait(&OSCAP_GSYM(th_barrier)))
 #endif
-        {
+    {
         case 0:
         case PTHREAD_BARRIER_SERIAL_THREAD:
 	        break;
         default:
-	        dE("pthread_barrier_wait: %d, %s.",
-	           errno, strerror(errno));
+	        dE("Failed to wait for icache barrier: %u, %s.", errno, strerror(errno));
 	        pthread_mutex_unlock(&cache->queue_mutex);
 	        return (NULL);
-        }
+    }
 
-        while(pthread_cond_wait(&cache->queue_notempty, &cache->queue_mutex) == 0) {
-			if (cache->queue_cnt <= 0) {
-				return NULL;
-			}
+    while(pthread_cond_wait(&cache->queue_notempty, &cache->queue_mutex) == 0) {
+        if(cache->queue_cnt <= 0) {
+            return NULL;
+        }
         do {
-                dD("Extracting item from the cache queue: cnt=%"PRIu16", beg=%"PRIu16"", cache->queue_cnt, cache->queue_beg);
-                /*
-                 * Extract an item from the queue and update queue beg, end & cnt
-                 */
-                pair_mem = cache->queue[cache->queue_beg];
+           dD("Extracting item from the cache queue: cnt=%"PRIu16", beg=%"PRIu16"", cache->queue_cnt, cache->queue_beg);
+           /*
+            * Extract an item from the queue and update queue beg, end & cnt
+            */
+            pair_mem = cache->queue[cache->queue_beg];
 #ifndef NDEBUG
-		memset(cache->queue + cache->queue_beg, 0, sizeof(probe_iqpair_t));
+		    memset(cache->queue + cache->queue_beg, 0, sizeof(probe_iqpair_t));
 #endif
-                --cache->queue_cnt;
-		++cache->queue_beg;
+            --cache->queue_cnt;
+		    ++cache->queue_beg;
 
-		if (cache->queue_beg == cache->queue_max)
-			cache->queue_beg = 0;
+		    if(cache->queue_beg == cache->queue_max) {
+                cache->queue_beg = 0;
+            }
 
-		if (cache->queue_cnt == 0 ?
-			cache->queue_end != cache->queue_beg :
-			cache->queue_end == cache->queue_beg) {
-			return NULL;
-		}
+		    if(cache->queue_cnt == 0 ?
+		    	cache->queue_end != cache->queue_beg :
+	    		cache->queue_end == cache->queue_beg) {
+	    		return NULL;
+	    	}
 
+            dD("Signaling `notfull'");
 
-                dD("Signaling `notfull'");
+            if(pthread_cond_signal(&cache->queue_notfull) != 0) {
+                dE("An error ocured while signaling the `notfull' condition: %u, %s", errno, strerror(errno));
+                abort();
+            }
+            /*
+             * Release the mutex
+             */
+            if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
+                dE("An error ocured while unlocking the queue mutex: %u, %s", errno, strerror(errno));
+               abort();
+            }
 
-                if (pthread_cond_signal(&cache->queue_notfull) != 0) {
-                        dE("An error ocured while signaling the `notfull' condition: %u, %s",
-                           errno, strerror(errno));
-                        abort();
-                }
+            if(pair->cobj == NULL) {
                 /*
-                 * Release the mutex
+                * Handle NOP case (synchronization)
+                */
+                if(pair->p.cond == NULL) {
+                   return NULL;
+                }
+
+                dD("Handling NOP");
+
+                if(pthread_cond_signal(pair->p.cond) != 0) {
+                    dE("An error ocured while signaling NOP condition: %u, %s", errno, strerror(errno));
+                    abort();
+                }
+            } else {
+                dD("Handling cache request");
+
+                /*
+                 * Compute item ID
                  */
-                if (pthread_mutex_unlock(&cache->queue_mutex) != 0) {
-                        dE("An error ocured while unlocking the queue mutex: %u, %s",
-                           errno, strerror(errno));
-                        abort();
-                }
-
-                if (pair->cobj == NULL) {
-                        /*
-                         * Handle NOP case (synchronization)
-                         */
-					if (pair->p.cond == NULL) {
-						return NULL;
-					}
-
-                        dD("Handling NOP");
-
-                        if (pthread_cond_signal(pair->p.cond) != 0) {
-                                dE("An error ocured while signaling NOP condition: %u, %s",
-                                   errno, strerror(errno));
-                                abort();
-                        }
-                } else {
-
-                        dD("Handling cache request");
-
-                        /*
-                         * Compute item ID
-                         */
-			dD("pair address: %"PRIu64, (uint64_t) pair);
-			dD("item address: %"PRIu64, (uint64_t) pair->p.item);
-                        item_ID = SEXP_ID_v(pair->p.item);
-                        dD("item ID=%"PRIu64"", item_ID);
+                dD("pair address: %"PRIu64, (uint64_t) pair);
+                dD("item address: %"PRIu64, (uint64_t) pair->p.item);
+                item_ID = SEXP_ID_v(pair->p.item);
+                dD("item ID=%"PRIu64"", item_ID);
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-                        if (icache_lookup(cache, item_ID, pair) != 0) {
+                if (icache_lookup(cache, item_ID, pair) != 0) {
 #else
-                        if (icache_lookup(cache->tree, item_ID, pair) != 0) {
+                if(icache_lookup(cache->tree, item_ID, pair) != 0) {
 #endif
-                                /*
-                                 * Cache MISS
-                                 */
-                                dD("cache MISS");
+                    /*
+                     * Cache MISS
+                     */
+                    dD("cache MISS");
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-                                icache_add_to_tree(cache, item_ID, pair);
+                    icache_add_to_tree(cache, item_ID, pair);
 #else
-                                icache_add_to_tree(cache->tree, item_ID, pair);
+                    icache_add_to_tree(cache->tree, item_ID, pair);
 #endif
-                        }
-
-                        if (probe_cobj_add_item(pair->cobj, pair->p.item) != 0) {
-                            dW("An error ocured while adding the item to the collected object");
-                        }
                 }
 
-                if (pthread_mutex_lock(&cache->queue_mutex) != 0) {
-                        dE("An error ocured while re-locking the queue mutex: %u, %s",
-                           errno, strerror(errno));
-                        abort();
+                if(probe_cobj_add_item(pair->cobj, pair->p.item) != 0) {
+                    dW("An error ocured while adding the item to the collected object");
                 }
+            }
 
-                } while (cache->queue_cnt > 0);
-        }
+            if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
+                dE("An error ocured while re-locking the queue mutex: %u, %s", errno, strerror(errno));
+                abort();
+            }
+        } while (cache->queue_cnt > 0);
+    }
 
-        return (NULL);
+    return (NULL);
 }
 
 probe_icache_t *probe_icache_new(void) {
@@ -366,26 +358,26 @@ probe_icache_t *probe_icache_new(void) {
     cache->next_id = 0;
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    if((errno = pthread_barrier_init(&cache->queue_barrier, NULL, 2)) != 0) {
+    if(pthread_barrier_init(&cache->queue_barrier, NULL, 2) != 0) {
         dE("Can't initialize icache barrier: %u, %s", errno, strerror(errno));
         goto fail_barrier;
     }
 #endif
-    if((errno = pthread_mutex_init(&cache->queue_mutex, NULL)) != 0) {
+    if(pthread_mutex_init(&cache->queue_mutex, NULL) != 0) {
         dE("Can't initialize icache mutex: %u, %s", errno, strerror(errno));
         goto fail_mutex;
     }
 
-    if((errno = pthread_cond_init(&cache->queue_notempty, NULL)) != 0) {
+    if(pthread_cond_init(&cache->queue_notempty, NULL) != 0) {
         dE("Can't initialize icache queue condition variable (notempty): %u, %s", errno, strerror(errno));
         goto fail_cond_notempty;
     }
-    if((errno = pthread_cond_init(&cache->queue_notfull, NULL)) != 0) {
+    if(pthread_cond_init(&cache->queue_notfull, NULL) != 0) {
         dE("Can't initialize icache queue condition variable (notfull): %u, %s", errno, strerror(errno));
         goto fail_cond_notfull;
     }
 #if defined(OVAL_EXTERNAL_PROBES_ENABLED) && !defined(HAVE_ATOMIC_BUILTINS)
-    if((errno = pthread_mutex_init(&cache->queue_mutex_next_id)) != 0) {
+    if(pthread_mutex_init(&cache->queue_mutex_next_id) != 0) {
         dE("Can't initialize icache mutex: %u, %s", errno, strerror(errno));
         goto fail_mutex_next_id;
     }
@@ -416,7 +408,6 @@ fail:
     if(cache != NULL && cache->tree != NULL) {
         rbt_i64_free(cache->tree);
     }
-    free(cache);
 
     return (NULL);
 }
@@ -425,9 +416,13 @@ fail:
 int probe_icache_wait(probe_icache_t *cache) {
     int ret;
 
-    ret = pthread_barrier_wait(&cache->queue_barrier);
-    if(ret != 0) {
-        dE("pthread_barrier_wait: %d, %s.", ret, strerror(ret));
+    switch(ret = pthread_barrier_wait(&cache->queue_barrier)) {
+        case 0:
+        case PTHREAD_BARRIER_SERIAL_THREAD:
+            ret = 0;
+            break;
+        default:
+            dE("Failed to sync with icache worker: %u, %s.", errno, strerror(errno));
     }
 
     return ret;
