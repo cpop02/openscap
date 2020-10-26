@@ -14,7 +14,7 @@
 #include "executor.h"
 #include "probe.h"
 
-#define _SEXP_free(var) SEXP_free(var), var = NULL
+#define _SEXP_free(var) SEXP_free(var), (var) = NULL
 
 #define MAX_SET_EVAL_DEPTH 8
 
@@ -305,7 +305,7 @@ static int probe_executor_prepare_filters(probe_executor_t *exec, SEXP_t *obj, S
             ret = PROBE_EINVAL;
             goto fail;
         }
-        filter = SEXP_list_new(action, sid);
+        filter = SEXP_list_new(action, sid, NULL);
         if(filter == NULL) {
             dE("probe_executor_prepare_filters: Failed to create filter");
             ret = PROBE_EUNKNOWN;
@@ -331,13 +331,13 @@ static int probe_executor_prepare_filters(probe_executor_t *exec, SEXP_t *obj, S
 
     goto cleanup;
 
-    fail:
+fail:
     SEXP_free(filter);
     SEXP_free(sid);
     SEXP_free(action);
     SEXP_free(ent);
 
-    cleanup:
+cleanup:
     SEXP_free(filters);
 
     return ret;
@@ -387,7 +387,6 @@ static int probe_executor_eval_set(probe_executor_t *exec, SEXP_t *set, SEXP_t *
     }
     n = SEXP_list_length(set);
     SEXP_sublist_foreach(elem, set, 2, n) {
-        dO(OSCAP_DEBUGOBJ_SEXP, elem);
         if(elem == NULL) {
             dE("probe_executor_eval_set: Unexpected end of set");
             ret = PROBE_EUNKNOWN;
@@ -434,7 +433,7 @@ static int probe_executor_eval_set(probe_executor_t *exec, SEXP_t *set, SEXP_t *
                 ret = PROBE_EINVAL;
                 goto fail;
             }
-            filter = SEXP_list_new(action, sid);
+            filter = SEXP_list_new(action, sid, NULL);
             if(filter == NULL) {
                 dE("probe_executor_eval_set: Failed to create filter list");
                 ret = PROBE_EUNKNOWN;
@@ -486,13 +485,13 @@ static int probe_executor_eval_set(probe_executor_t *exec, SEXP_t *set, SEXP_t *
 
     goto cleanup;
 
-    fail:
+fail:
     SEXP_free(filter);
     SEXP_free(sid);
     SEXP_free(action);
     SEXP_free(elem);
 
-    cleanup:
+cleanup:
     for(i = 0; i < obj_i; i++) {
         SEXP_free(objs[i]);
     }
@@ -651,7 +650,7 @@ static int probe_executor_fetch_filters(probe_executor_t *exec, SEXP_t *filters,
             ret = PROBE_ENOENT;
             goto fail;
         }
-        rfilter = SEXP_list_new(action, state);
+        rfilter = SEXP_list_new(action, state, NULL);
         if(rfilter == NULL) {
             dE("probe_executor_fetch_filters: Failed to create response filter");
             ret = PROBE_EUNKNOWN;
