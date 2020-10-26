@@ -771,8 +771,6 @@ static int probe_executor_fetch_ste_nocache(probe_executor_t *exec, SEXP_t *sids
 
     __attribute__nonnull__(exec);
     __attribute__nonnull__(sids);
-    __attribute__nonnull__(out);
-
 
     if(exec->ctx.probe_cmd_handlers.ste_fetch == NULL) {
         dE("probe_executor_fetch_ste_nocache: No state fetch handler provided");
@@ -814,7 +812,9 @@ static int probe_executor_fetch_ste_nocache(probe_executor_t *exec, SEXP_t *sids
         _SEXP_free(state);
     }
 
-    *out = states;
+    if(out != NULL) {
+        *out = states;
+    }
 
     goto cleanup;
 
@@ -824,5 +824,9 @@ fail:
     SEXP_free(states);
 
 cleanup:
+    if(out == NULL) {
+        SEXP_free(states);
+    }
+
     return ret;
 }
