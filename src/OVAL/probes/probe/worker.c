@@ -736,10 +736,12 @@ SEXP_t *probe_worker(probe_t *probe, SEAP_msg_t *msg_in, int *ret)
 
 			pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &__unused_oldstate);
 
+#ifdef OVAL_ICACHE_THREAD_ENABLED
                         /*
                          * Synchronize
                          */
                         probe_icache_nop(probe->icache);
+#endif
 
 			probe_cobj_compute_flag(probe_out);
 		} else {
@@ -777,10 +779,12 @@ SEXP_t *probe_worker(probe_t *probe, SEAP_msg_t *msg_in, int *ret)
 			dI("I will run %s_probe_main:", subtype_str);
 			*ret = probe_main_function(&pctx, probe->probe_arg);
 
+#ifdef OVAL_ICACHE_THREAD_ENABLED
                                 /*
                                  * Synchronize
                                  */
                                 probe_icache_nop(probe->icache);
+#endif
 
 				probe_cobj_compute_flag(cobj);
 				r0 = probe_out;

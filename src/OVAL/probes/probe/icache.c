@@ -45,165 +45,358 @@
 #include "icache.h"
 #include "_sexp-ID.h"
 
+#define PROBE_RESULT_MEMCHECK_CTRESHOLD  32768  /* item count */
+#define PROBE_RESULT_MEMCHECK_MINFREEMEM 512    /* MiB */
+#define PROBE_RESULT_MEMCHECK_MAXRATIO   0.8   /* max. memory usage ratio - used/total */
+
+#ifndef OVAL_EXTERNAL_PROBES_ENABLED
 static volatile uint32_t next_ID = 0;
 
 #if !defined(HAVE_ATOMIC_BUILTINS)
 pthread_mutex_t next_ID_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
+#endif
+
+
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+static void *probe_icache_worker(void *arg);
+#endif
+static void probe_icache_free_node(struct rbt_i64_node *n);
+static void probe_icache_item_setID(probe_icache_t *cache, SEXP_t *item);
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+static int icache_lookup(probe_icache_t *cache, int64_t item_id, probe_iqpair_t *pair);
+#else
+static int icache_lookup(rbt_t *tree, int64_t item_id, probe_iqpair_t *pair);
+#endif
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+static void icache_add_to_tree(probe_icache_t *cache, int64_t item_id, probe_iqpair_t *pair);
+#else
+static void icache_add_to_tree(rbt_t *tree, int64_t item_id, probe_iqpair_t *pair);
+#endif
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+static int __probe_icache_add_nolock(probe_icache_t *cache, SEXP_t *cobj, SEXP_t *item, pthread_cond_t *cond) {
+#endif
+static int probe_cobj_memcheck(size_t item_cnt);
+
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+probe_icache_t *probe_icache_new(void) {
+    probe_icache_t *cache = malloc(sizeof(probe_icache_t));
+    if(cache == NULL) {
+        goto fail;
+    }
+    cache->tree = rbt_i64_new();
+    if(cache->tree == NULL) {
+        goto fail;
+    }
+
+    cache->queue_beg = 0;
+    cache->queue_end = 0;
+    cache->queue_cnt = 0;
+    cache->queue_max = PROBE_IQUEUE_CAPACITY;
+    cache->next_id = 0;
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-static void probe_icache_item_setID(probe_icache_t *cache, SEXP_t *item) {
-#else
-static void probe_icache_item_setID(SEXP_t *item) {
+    if(pthread_barrier_init(&cache->queue_barrier, NULL, 2) != 0) {
+        dE("Can't initialize icache barrier: %u, %s", errno, strerror(errno));
+        goto fail_barrier;
+    }
 #endif
-    SEXP_t  *name_ref, *prev_id;
-    SEXP_t   uniq_id;
-    uint32_t local_id;
+    if(pthread_mutex_init(&cache->queue_mutex, NULL) != 0) {
+        dE("Can't initialize icache mutex: %u, %s", errno, strerror(errno));
+        goto fail_mutex;
+    }
 
-    /* ((foo_item :id "<int>") ... ) */
+    if(pthread_cond_init(&cache->queue_notempty, NULL) != 0) {
+        dE("Can't initialize icache queue condition variable (notempty): %u, %s", errno, strerror(errno));
+        goto fail_cond_notempty;
+    }
+    if(pthread_cond_init(&cache->queue_notfull, NULL) != 0) {
+        dE("Can't initialize icache queue condition variable (notfull): %u, %s", errno, strerror(errno));
+        goto fail_cond_notfull;
+    }
+#if defined(OVAL_EXTERNAL_PROBES_ENABLED) && !defined(HAVE_ATOMIC_BUILTINS)
+    if(pthread_mutex_init(&cache->queue_mutex_next_id) != 0) {
+        dE("Can't initialize icache mutex: %u, %s", errno, strerror(errno));
+        goto fail_mutex_next_id;
+    }
+#endif
+    if(pthread_create(&cache->thid, NULL, probe_icache_worker, (void *)cache) != 0) {
+        dE("Can't start the icache worker: %u, %s", errno, strerror(errno));
+        goto fail_thread;
+    }
 
-	if (item == NULL) {
-		return;
-	}
-	if (!SEXP_listp(item)) {
-		return;
-	}
+    return (cache);
 
-#if defined(HAVE_ATOMIC_BUILTINS)
+fail_thread:
+#if defined(OVAL_EXTERNAL_PROBES_ENABLED) && !defined(HAVE_ATOMIC_BUILTINS)
+    pthread_mutex_destroy(&cache->queue_mutex_next_id);
+fail_mutex_next_id:
+#endif
+    pthread_cond_destroy(&cache->queue_notfull);
+fail_cond_notfull:
+    pthread_cond_destroy(&cache->queue_notempty);
+fail_cond_notempty:
+    pthread_mutex_destroy(&cache->queue_mutex);
+fail_mutex:
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    local_id = __sync_fetch_and_add(&cache->next_id, 1);
-#else
-    local_id = __sync_fetch_and_add(&next_ID, 1);
+    pthread_barrier_destroy(&cache->queue_barrier);
+fail_barrier:
 #endif
+fail:
+    if(cache != NULL && cache->tree != NULL) {
+        rbt_i64_free(cache->tree);
+    }
+
+    return (NULL);
+}
 #else
+probe_icache_t *probe_icache_new(void) {
+    probe_icache_t *cache;
+
+    cache = (probe_icache_t*)calloc(1, sizeof(probe_icache_t));
+    if(cache == NULL) {
+        goto fail;
+    }
+    cache->tree = rbt_i64_new();
+    if(cache->tree != NULL) {
+        goto cleanup;
+    }
+
+fail:
+    probe_icache_free(cache);
+    if(cache != NULL && cache->tree != NULL) {
+        rbt_i64_free(cache->tree);
+    }
+cleanup:
+    return cache;
+}
+#endif
+
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+void probe_icache_free(probe_icache_t *cache) {
+    if(cache != NULL) {
+        if (pthread_cancel(cache->thid) != 0) {
+            dE("An error occurred while canceling the icache worker thread: %u %s", errno, strerror(errno));
+        }
+        if (pthread_join(cache->thid, NULL) != 0) {
+            dE("An error occurred while joining the icache worker thread: %u %s", errno, strerror(errno));
+        }
+
+#if defined(OVAL_EXTERNAL_PROBES_ENABLED) && !defined(HAVE_ATOMIC_BUILTINS)
+        pthread_mutex_destroy(&cache->queue_mutex_next_id);
+#endif
+        pthread_cond_destroy(&cache->queue_notfull);
+        pthread_cond_destroy(&cache->queue_notempty);
+        pthread_mutex_destroy(&cache->queue_mutex);
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    if(pthread_mutex_lock(&cache->queue_mutex_next_id) != 0) {
-            dE("Can't lock the next_ID_mutex: %u, %s", errno, strerror(errno));
-            abort();
+        pthread_barrier_destroy(&cache->queue_barrier);
+#endif
+        rbt_i64_free_cb(cache->tree, &probe_icache_free_node);
     }
-    local_id = ++cache->next_id;
-    if(pthread_mutex_unlock(&cache->queue_mutex_next_id) != 0) {
-            dE("Can't unlock the next_ID_mutex: %u, %s", errno, strerror(errno));
-            abort();
-    }
+    free(cache);
+}
 #else
-    if(pthread_mutex_lock(&next_ID_mutex) != 0) {
-            dE("Can't lock the next_ID_mutex: %u, %s", errno, strerror(errno));
-            abort();
+void probe_icache_free(probe_icache_t *cache) {
+    if(cache != NULL) {
+        rbt_i64_free_cb(cache->tree, &probe_icache_free_node);
     }
-    local_id = ++next_ID;
-    if(pthread_mutex_unlock(&next_ID_mutex) != 0) {
-            dE("Can't unlock the next_ID_mutex: %u, %s", errno, strerror(errno));
-            abort();
+    free(cache);
+}
+#endif
+
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+int probe_icache_wait(probe_icache_t *cache) {
+    int ret;
+
+    switch(ret = pthread_barrier_wait(&cache->queue_barrier)) {
+        case 0:
+        case PTHREAD_BARRIER_SERIAL_THREAD:
+            ret = 0;
+            break;
+        default:
+            dE("Failed to sync with icache worker: %u, %s.", errno, strerror(errno));
     }
+
+    return ret;
+}
 #endif
 #endif
 
-    SEXP_string_newf_r(&uniq_id, "1%05u%u", getpid(), local_id);
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+int probe_icache_add(probe_icache_t *cache, SEXP_t *cobj, SEXP_t *item) {
+    int ret;
 
-    name_ref = SEXP_listref_first(item);
-    prev_id  = SEXP_list_replace(name_ref, 3, &uniq_id);
+    if(cache == NULL || cobj == NULL || item == NULL) {
+        return (-1); /* XXX: EFAULT */
+    }
 
-    SEXP_free(prev_id);
-    SEXP_free_r(&uniq_id);
-    SEXP_free(name_ref);
+    if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
+        dE("An error occurred while locking the queue mutex: %u, %s", errno, strerror(errno));
+        return (-1);
+    }
+    ret = __probe_icache_add_nolock(cache, cobj, item, NULL);
+    if(pthread_cond_signal(&cache->queue_notempty) != 0 && ret == 0) {
+        dE("An error occurred while signaling the `notempty' condition: %u, %s", errno, strerror(errno));
+        ret = -1;
+    }
+    if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
+        dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
+        abort();
+    }
+    if(ret != 0) {
+        return (-1);
+    }
+
+    return (0);
+}
+#else
+int probe_icache_add(probe_icache_t *cache, SEXP_t *cobj, SEXP_t *item) {
+    int ret;
+    SEXP_ID_t item_id;
+    probe_iqpair_t pair;
+
+    item_id = SEXP_ID_v(item);
+
+    dD("Adding item to cache: ID="PRIu64" address=%"PRIu64, item_id, item);
+
+    __attribute__nonnull__(cache);
+    __attribute__nonnull__(cobj);
+    __attribute__nonnull__(item);
+
+    pair.cobj = cobj;
+    pair.p.item = item;
+
+    if(icache_lookup(cache, item_id, &pair) != 0) {
+        dD("Adding missing item to cache");
+        icache_add_to_tree(cache, item_id, &pair);
+    }
+    ret = probe_cobj_add_item(cobj, pair.p.item);
+    if(ret != 0) {
+        dW("An error occurred while adding the item to the collected object");
+    }
+
+    return ret;
+}
+#endif
+
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+int probe_icache_nop(probe_icache_t *cache) {
+    pthread_cond_t cond;
+
+    memset(&cond, 0, sizeof(pthread_cond_t));
+
+    dD("NOP");
+
+    if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
+        dE("An error occurred while locking the queue mutex: %u, %s", errno, strerror(errno));
+        return (-1);
+    }
+    if(pthread_cond_init(&cond, NULL) != 0) {
+        dE("Can't initialize icache queue condition variable (NOP): %u, %s", errno, strerror(errno));
+        return (-1);
+    }
+    if(__probe_icache_add_nolock(cache, NULL, NULL, &cond) != 0) {
+        if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
+            dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
+            abort();
+        }
+        pthread_cond_destroy(&cond);
+        return (-1);
+    }
+
+    dD("Signaling `notempty'");
+
+    if(pthread_cond_signal(&cache->queue_notempty) != 0) {
+        dE("An error occurred while signaling the `notempty' condition: %u, %s", errno, strerror(errno));
+        pthread_cond_destroy(&cond);
+        return (-1);
+    }
+
+    dD("Waiting for icache worker to handle the NOP");
+
+    if(pthread_cond_wait(&cond, &cache->queue_mutex) != 0) {
+        dE("An error occurred while waiting for the `NOP' queue condition: %u, %s", errno, strerror(errno));
+        return (-1);
+    }
+
+    dD("Sync");
+
+    if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
+        dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
+        abort();
+    }
+
+    pthread_cond_destroy(&cond);
+
+    return (0);
+}
+#endif
+
+/**
+ * Collect an item
+ * This function adds an item the collected object assosiated
+ * with the given probe context.
+ *
+ * Returns:
+ * 0 ... the item was succesfully added to the collected object
+ * 1 ... the item was filtered out
+ * 2 ... the item was not added because of memory constraints
+ *       and the collected object was flagged as incomplete
+ *-1 ... unexpected/internal error
+ *
+ * The caller must not free the item, it's freed automatically
+ * by this function or by the icache worker thread.
+ */
+int probe_item_collect(struct probe_ctx *ctx, SEXP_t *item) {
+    size_t  cobj_itemcnt;
+    SEXP_t *cobj_content, *msg;
+
+    if(ctx == NULL || ctx->probe_out == NULL || item == NULL) {
+        return -1;
+    }
+
+    cobj_content = SEXP_listref_nth(ctx->probe_out, 3);
+    cobj_itemcnt = SEXP_list_length(cobj_content);
+    SEXP_free(cobj_content);
+
+    if(probe_cobj_memcheck(cobj_itemcnt) != 0) {
+        /*
+         * Don't set the message again if the collected object is
+         * already flagged as incomplete.
+         */
+        if(probe_cobj_get_flag(ctx->probe_out) != SYSCHAR_FLAG_INCOMPLETE) {
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+            /*
+             * Sync with the icache thread before modifying the
+             * collected object.
+             */
+            if(probe_icache_nop(ctx->icache) != 0) {
+                return -1;
+            }
+#endif
+            msg = probe_msg_creat(OVAL_MESSAGE_LEVEL_WARNING,
+                                  "Object is incomplete due to memory constraints.");
+            probe_cobj_add_msg(ctx->probe_out, msg);
+            probe_cobj_set_flag(ctx->probe_out, SYSCHAR_FLAG_INCOMPLETE);
+            SEXP_free(msg);
+        }
+        return 2;
+    }
+    if(ctx->filters != NULL && probe_item_filtered(item, ctx->filters)) {
+        SEXP_free(item);
+        return (1);
+    }
+    if(probe_icache_add(ctx->icache, ctx->probe_out, item) != 0) {
+        dE("Can't add item (%p) to the item cache (%p)", item, ctx->icache);
+        SEXP_free(item);
+        return (-1);
+    }
+
+    return (0);
 }
 
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-static int icache_lookup(probe_icache_t *cache, int64_t item_id, probe_iqpair_t *pair) {
-#else
-static int icache_lookup(rbt_t *tree, int64_t item_id, probe_iqpair_t *pair) {
-#endif
-	probe_citem_t *cached = NULL;
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-	rbt_t *tree = cache->tree;
-#endif
-
-	if (rbt_i64_get(tree, item_id, (void**)&cached) != 0) {
-		return -1;
-	}
-
-	/*
-	* Maybe a cache HIT
-	*/
-	dD("cache HIT #1");
-
-	register uint16_t i;
-	for (i = 0; i < cached->count; ++i) {
-		SEXP_t rest1;
-		SEXP_t* rest_r1 = SEXP_list_rest_r(&rest1, pair->p.item);
-
-		SEXP_t rest2;
-		SEXP_t* rest_r2 = SEXP_list_rest_r(&rest2, cached->item[i]);
-
-		if (SEXP_deepcmp(rest_r1, rest_r2)) {
-			SEXP_free_r(&rest1);
-			SEXP_free_r(&rest2);
-			break;
-		}
-
-		SEXP_free_r(&rest1);
-		SEXP_free_r(&rest2);
-	}
-
-	if (i == cached->count) {
-		/*
-		* Cache MISS
-		*/
-		dD("cache MISS");
-
-		cached->item = realloc(cached->item, sizeof(SEXP_t *) * ++cached->count);
-		cached->item[cached->count - 1] = pair->p.item;
-
-		/* Assign an unique item ID */
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-		probe_icache_item_setID(cache, pair->p.item);
-#else
-        probe_icache_item_setID(pair->p.item);
-#endif
-	} else {
-		/*
-		* Cache HIT
-		*/
-		dD("cache HIT #2 -> real HIT");
-		SEXP_free(pair->p.item);
-		pair->p.item = cached->item[i];
-	}
-	return 0;
-}
-
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-static void icache_add_to_tree(probe_icache_t *cache, int64_t item_id, probe_iqpair_t *pair) {
-#else
-static void icache_add_to_tree(rbt_t *tree, int64_t item_id, probe_iqpair_t *pair) {
-#endif
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    rbt_t *tree = cache->tree;
-#endif
-
-	probe_citem_t *cached = malloc(sizeof(probe_citem_t));
-	cached->item = malloc(sizeof(SEXP_t *));
-	cached->item[0] = pair->p.item;
-	cached->count = 1;
-
-	/* Assign an unique item ID */
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    probe_icache_item_setID(cache, pair->p.item);
-#else
-	probe_icache_item_setID(pair->p.item);
-#endif
-
-	if (rbt_i64_add(tree, (int64_t)item_id, (void **)cached, NULL) != 0) {
-		dE("Can't add item (k=%"PRIi64" to the cache (%p)", item_id, tree);
-
-		free(cached->item);
-		free(cached);
-
-		/* now what? */
-		abort();
-	}
-}
-
+#ifdef OVAL_ICACHE_THREAD_ENABLED
 static void *probe_icache_worker(void *arg) {
     probe_icache_t *cache = (probe_icache_t *)(arg);
     probe_iqpair_t *pair, pair_mem;
@@ -341,95 +534,174 @@ static void *probe_icache_worker(void *arg) {
 
     return (NULL);
 }
-
-probe_icache_t *probe_icache_new(void) {
-    probe_icache_t *cache = malloc(sizeof(probe_icache_t));
-    if(cache == NULL) {
-        goto fail;
-    }
-    cache->tree = rbt_i64_new();
-    if(cache->tree == NULL) {
-        goto fail;
-    }
-
-    cache->queue_beg = 0;
-    cache->queue_end = 0;
-    cache->queue_cnt = 0;
-    cache->queue_max = PROBE_IQUEUE_CAPACITY;
-    cache->next_id = 0;
-
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    if(pthread_barrier_init(&cache->queue_barrier, NULL, 2) != 0) {
-        dE("Can't initialize icache barrier: %u, %s", errno, strerror(errno));
-        goto fail_barrier;
-    }
 #endif
-    if(pthread_mutex_init(&cache->queue_mutex, NULL) != 0) {
-        dE("Can't initialize icache mutex: %u, %s", errno, strerror(errno));
-        goto fail_mutex;
+
+static void probe_icache_free_node(struct rbt_i64_node *n) {
+    probe_citem_t *ci;
+
+    ci = (probe_citem_t *)n->data;
+    for( ; ci->count > 0 ; --ci->count ) {
+        SEXP_free(ci->item[ci->count - 1]);
     }
 
-    if(pthread_cond_init(&cache->queue_notempty, NULL) != 0) {
-        dE("Can't initialize icache queue condition variable (notempty): %u, %s", errno, strerror(errno));
-        goto fail_cond_notempty;
-    }
-    if(pthread_cond_init(&cache->queue_notfull, NULL) != 0) {
-        dE("Can't initialize icache queue condition variable (notfull): %u, %s", errno, strerror(errno));
-        goto fail_cond_notfull;
-    }
-#if defined(OVAL_EXTERNAL_PROBES_ENABLED) && !defined(HAVE_ATOMIC_BUILTINS)
-    if(pthread_mutex_init(&cache->queue_mutex_next_id) != 0) {
-        dE("Can't initialize icache mutex: %u, %s", errno, strerror(errno));
-        goto fail_mutex_next_id;
-    }
-#endif
-    if(pthread_create(&cache->thid, NULL, probe_icache_worker, (void *)cache) != 0) {
-        dE("Can't start the icache worker: %u, %s", errno, strerror(errno));
-        goto fail_thread;
-    }
-
-    return (cache);
-
-fail_thread:
-#if defined(OVAL_EXTERNAL_PROBES_ENABLED) && !defined(HAVE_ATOMIC_BUILTINS)
-    pthread_mutex_destroy(&cache->queue_mutex_next_id);
-fail_mutex_next_id:
-#endif
-    pthread_cond_destroy(&cache->queue_notfull);
-fail_cond_notfull:
-    pthread_cond_destroy(&cache->queue_notempty);
-fail_cond_notempty:
-    pthread_mutex_destroy(&cache->queue_mutex);
-fail_mutex:
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-    pthread_barrier_destroy(&cache->queue_barrier);
-fail_barrier:
-#endif
-fail:
-    if(cache != NULL && cache->tree != NULL) {
-        rbt_i64_free(cache->tree);
-    }
-
-    return (NULL);
+    free(ci->item);
+    free(ci);
 }
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-int probe_icache_wait(probe_icache_t *cache) {
-    int ret;
+static void probe_icache_item_setID(probe_icache_t *cache, SEXP_t *item) {
+#else
+static void probe_icache_item_setID(SEXP_t *item) {
+#endif
+    SEXP_t  *name_ref, *prev_id;
+    SEXP_t   uniq_id;
+    uint32_t local_id;
 
-    switch(ret = pthread_barrier_wait(&cache->queue_barrier)) {
-        case 0:
-        case PTHREAD_BARRIER_SERIAL_THREAD:
-            ret = 0;
-            break;
-        default:
-            dE("Failed to sync with icache worker: %u, %s.", errno, strerror(errno));
+    /* ((foo_item :id "<int>") ... ) */
+
+	if (item == NULL) {
+		return;
+	}
+	if (!SEXP_listp(item)) {
+		return;
+	}
+
+#if defined(HAVE_ATOMIC_BUILTINS)
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+    local_id = __sync_fetch_and_add(&cache->next_id, 1);
+#else
+    local_id = __sync_fetch_and_add(&next_ID, 1);
+#endif
+#else
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+    if(pthread_mutex_lock(&cache->queue_mutex_next_id) != 0) {
+            dE("Can't lock the next_ID_mutex: %u, %s", errno, strerror(errno));
+            abort();
     }
-
-    return ret;
-}
+    local_id = ++cache->next_id;
+    if(pthread_mutex_unlock(&cache->queue_mutex_next_id) != 0) {
+            dE("Can't unlock the next_ID_mutex: %u, %s", errno, strerror(errno));
+            abort();
+    }
+#else
+    if(pthread_mutex_lock(&next_ID_mutex) != 0) {
+            dE("Can't lock the next_ID_mutex: %u, %s", errno, strerror(errno));
+            abort();
+    }
+    local_id = ++next_ID;
+    if(pthread_mutex_unlock(&next_ID_mutex) != 0) {
+            dE("Can't unlock the next_ID_mutex: %u, %s", errno, strerror(errno));
+            abort();
+    }
+#endif
 #endif
 
+    SEXP_string_newf_r(&uniq_id, "1%05u%u", getpid(), local_id);
+
+    name_ref = SEXP_listref_first(item);
+    prev_id  = SEXP_list_replace(name_ref, 3, &uniq_id);
+
+    SEXP_free(prev_id);
+    SEXP_free_r(&uniq_id);
+    SEXP_free(name_ref);
+}
+
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+static int icache_lookup(probe_icache_t *cache, int64_t item_id, probe_iqpair_t *pair) {
+#else
+static int icache_lookup(rbt_t *tree, int64_t item_id, probe_iqpair_t *pair) {
+#endif
+	probe_citem_t *cached = NULL;
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+	rbt_t *tree = cache->tree;
+#endif
+
+	if(rbt_i64_get(tree, item_id, (void**)&cached) != 0) {
+		return -1;
+	}
+
+	/*
+	* Maybe a cache HIT
+	*/
+	dD("cache HIT #1");
+
+	register uint16_t i;
+	for(i = 0; i < cached->count; ++i) {
+		SEXP_t rest1;
+		SEXP_t* rest_r1 = SEXP_list_rest_r(&rest1, pair->p.item);
+
+		SEXP_t rest2;
+		SEXP_t* rest_r2 = SEXP_list_rest_r(&rest2, cached->item[i]);
+
+		if (SEXP_deepcmp(rest_r1, rest_r2)) {
+			SEXP_free_r(&rest1);
+			SEXP_free_r(&rest2);
+			break;
+		}
+
+		SEXP_free_r(&rest1);
+		SEXP_free_r(&rest2);
+	}
+
+	if(i == cached->count) {
+		/*
+		* Cache MISS
+		*/
+		dD("cache MISS");
+
+		cached->item = realloc(cached->item, sizeof(SEXP_t *) * ++cached->count);
+		cached->item[cached->count - 1] = pair->p.item;
+
+		/* Assign an unique item ID */
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+		probe_icache_item_setID(cache, pair->p.item);
+#else
+        probe_icache_item_setID(pair->p.item);
+#endif
+	} else {
+		/*
+		* Cache HIT
+		*/
+		dD("cache HIT #2 -> real HIT");
+		SEXP_free(pair->p.item);
+		pair->p.item = cached->item[i];
+	}
+	return 0;
+}
+
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+static void icache_add_to_tree(probe_icache_t *cache, int64_t item_id, probe_iqpair_t *pair) {
+#else
+static void icache_add_to_tree(rbt_t *tree, int64_t item_id, probe_iqpair_t *pair) {
+#endif
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+    rbt_t *tree = cache->tree;
+#endif
+
+	probe_citem_t *cached = malloc(sizeof(probe_citem_t));
+	cached->item = malloc(sizeof(SEXP_t *));
+	cached->item[0] = pair->p.item;
+	cached->count = 1;
+
+	/* Assign an unique item ID */
+#ifdef OVAL_EXTERNAL_PROBES_ENABLED
+    probe_icache_item_setID(cache, pair->p.item);
+#else
+	probe_icache_item_setID(pair->p.item);
+#endif
+
+	if(rbt_i64_add(tree, (int64_t)item_id, (void **)cached, NULL) != 0) {
+		dE("Can't add item (k=%"PRIi64" to the cache (%p)", item_id, tree);
+
+		free(cached->item);
+		free(cached);
+
+		/* now what? */
+		abort();
+	}
+}
+
+#ifdef OVAL_ICACHE_THREAD_ENABLED
 static int __probe_icache_add_nolock(probe_icache_t *cache, SEXP_t *cobj, SEXP_t *item, pthread_cond_t *cond) {
 	if (!((cond == NULL) ^ (item == NULL))) {
 		return -1;
@@ -469,88 +741,7 @@ retry:
 
     return (0);
 }
-
-int probe_icache_add(probe_icache_t *cache, SEXP_t *cobj, SEXP_t *item) {
-        int ret;
-
-        if(cache == NULL || cobj == NULL || item == NULL) {
-            return (-1); /* XXX: EFAULT */
-        }
-
-        if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
-            dE("An error occurred while locking the queue mutex: %u, %s", errno, strerror(errno));
-            return (-1);
-        }
-        ret = __probe_icache_add_nolock(cache, cobj, item, NULL);
-        if(pthread_cond_signal(&cache->queue_notempty) != 0 && ret == 0) {
-            dE("An error occurred while signaling the `notempty' condition: %u, %s", errno, strerror(errno));
-            ret = -1;
-        }
-        if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
-            dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
-            abort();
-        }
-        if(ret != 0) {
-            return (-1);
-        }
-
-        return (0);
-}
-
-int probe_icache_nop(probe_icache_t *cache) {
-    pthread_cond_t cond;
-
-    memset(&cond, 0, sizeof(pthread_cond_t));
-
-    dD("NOP");
-
-    if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
-        dE("An error occurred while locking the queue mutex: %u, %s", errno, strerror(errno));
-        return (-1);
-    }
-    if(pthread_cond_init(&cond, NULL) != 0) {
-        dE("Can't initialize icache queue condition variable (NOP): %u, %s", errno, strerror(errno));
-        return (-1);
-    }
-    if(__probe_icache_add_nolock(cache, NULL, NULL, &cond) != 0) {
-        if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
-            dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
-            abort();
-        }
-        pthread_cond_destroy(&cond);
-        return (-1);
-    }
-
-    dD("Signaling `notempty'");
-
-    if(pthread_cond_signal(&cache->queue_notempty) != 0) {
-        dE("An error occurred while signaling the `notempty' condition: %u, %s", errno, strerror(errno));
-        pthread_cond_destroy(&cond);
-        return (-1);
-    }
-
-    dD("Waiting for icache worker to handle the NOP");
-
-    if(pthread_cond_wait(&cond, &cache->queue_mutex) != 0) {
-        dE("An error occurred while waiting for the `NOP' queue condition: %u, %s", errno, strerror(errno));
-        return (-1);
-    }
-
-    dD("Sync");
-
-    if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
-        dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
-        abort();
-    }
-
-    pthread_cond_destroy(&cond);
-
-    return (0);
-}
-
-#define PROBE_RESULT_MEMCHECK_CTRESHOLD  32768  /* item count */
-#define PROBE_RESULT_MEMCHECK_MINFREEMEM 512    /* MiB */
-#define PROBE_RESULT_MEMCHECK_MAXRATIO   0.8   /* max. memory usage ratio - used/total */
+#endif
 
 /**
  * Returns 0 if the memory constraints are not reached. Otherwise, 1 is returned.
@@ -586,104 +777,4 @@ static int probe_cobj_memcheck(size_t item_cnt) {
 	}
 
 	return (0);
-}
-
-/**
- * Collect an item
- * This function adds an item the collected object assosiated
- * with the given probe context.
- *
- * Returns:
- * 0 ... the item was succesfully added to the collected object
- * 1 ... the item was filtered out
- * 2 ... the item was not added because of memory constraints
- *       and the collected object was flagged as incomplete
- *-1 ... unexpected/internal error
- *
- * The caller must not free the item, it's freed automatically
- * by this function or by the icache worker thread.
- */
-int probe_item_collect(struct probe_ctx *ctx, SEXP_t *item) {
-	SEXP_t *cobj_content;
-	size_t  cobj_itemcnt;
-
-	if(ctx == NULL || ctx->probe_out == NULL || item == NULL) {
-		return -1;
-	}
-
-	cobj_content = SEXP_listref_nth(ctx->probe_out, 3);
-	cobj_itemcnt = SEXP_list_length(cobj_content);
-	SEXP_free(cobj_content);
-
-	if(probe_cobj_memcheck(cobj_itemcnt) != 0) {
-		/*
-		 * Don't set the message again if the collected object is
-		 * already flagged as incomplete.
-		 */
-		if(probe_cobj_get_flag(ctx->probe_out) != SYSCHAR_FLAG_INCOMPLETE) {
-			SEXP_t *msg;
-			/*
-			 * Sync with the icache thread before modifying the
-			 * collected object.
-			 */
-			if(probe_icache_nop(ctx->icache) != 0) {
-                return -1;
-            }
-
-			msg = probe_msg_creat(OVAL_MESSAGE_LEVEL_WARNING,
-			                      "Object is incomplete due to memory constraints.");
-			probe_cobj_add_msg(ctx->probe_out, msg);
-			probe_cobj_set_flag(ctx->probe_out, SYSCHAR_FLAG_INCOMPLETE);
-
-			SEXP_free(msg);
-		}
-
-		return 2;
-	}
-        if(ctx->filters != NULL && probe_item_filtered(item, ctx->filters)) {
-            SEXP_free(item);
-    		return (1);
-        }
-
-        if(probe_icache_add(ctx->icache, ctx->probe_out, item) != 0) {
-            dE("Can't add item (%p) to the item cache (%p)", item, ctx->icache);
-            SEXP_free(item);
-            return (-1);
-        }
-
-        return (0);
-}
-
-static void probe_icache_free_node(struct rbt_i64_node *n) {
-    probe_citem_t *ci = (probe_citem_t *)n->data;
-
-	for ( ; ci->count > 0 ; --ci->count ) {
-		SEXP_free(ci->item[ci->count - 1]);
-	}
-
-    free(ci->item);
-    free(ci);
-}
-
-void probe_icache_free(probe_icache_t *cache) {
-    if(cache != NULL) {
-        if (pthread_cancel(cache->thid) != 0) {
-            dE("An error occurred while canceling the icache worker thread: %u %s", errno, strerror(errno));
-        }
-        if (pthread_join(cache->thid, NULL) != 0) {
-            dE("An error occurred while joining the icache worker thread: %u %s", errno, strerror(errno));
-        }
-
-#if defined(OVAL_EXTERNAL_PROBES_ENABLED) && !defined(HAVE_ATOMIC_BUILTINS)
-        pthread_mutex_destroy(&cache->queue_mutex_next_id);
-#endif
-        pthread_cond_destroy(&cache->queue_notfull);
-        pthread_cond_destroy(&cache->queue_notempty);
-        pthread_mutex_destroy(&cache->queue_mutex);
-#ifdef OVAL_EXTERNAL_PROBES_ENABLED
-        pthread_barrier_destroy(&cache->queue_barrier);
-#endif
-        rbt_i64_free_cb(cache->tree, &probe_icache_free_node);
-    }
-    free(cache);
 }

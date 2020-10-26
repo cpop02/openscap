@@ -49,9 +49,11 @@ probe_executor_t* probe_executor_new(probe_executor_ctx_t *ctx) {
     if(exec->icache == NULL) {
         goto fail;
     }
+#ifdef OVAL_ICACHE_THREAD_ENABLED
     if(probe_icache_wait(exec->icache) != 0) {
         goto fail;
     }
+#endif
 
     goto cleanup;
 
@@ -119,13 +121,16 @@ cleanup:
 }
 
 static int probe_executor_exec_nocache(probe_executor_t *exec, SEXP_t *oid, probe_request_t *req) {
-    int ret, err;
+    int ret;
     probe_ctx probe_ctx;
     SEXP_t *set = NULL, *cobj, *aux;
     SEXP_t *mask = NULL, *varrefs = NULL;
     SEXP_t *probe_in = NULL, *probe_out = NULL;
     probe_main_function_t probe_handler;
     struct probe_varref_ctx *varref_ctx = NULL;
+#ifdef OVAL_ICACHE_THREAD_ENABLED
+    int err;
+#endif
 
     __attribute__nonnull__(exec);
     __attribute__nonnull__(oid);
@@ -180,12 +185,14 @@ static int probe_executor_exec_nocache(probe_executor_t *exec, SEXP_t *oid, prob
                 dE("probe_executor_exec_nocache: Failed to run probe handler for object");
             }
 
+#ifdef OVAL_ICACHE_THREAD_ENABLED
             if((err = probe_icache_nop(exec->icache)) != 0) {
                 dE("probe_executor_exec_nocache: Failed to sync with icache");
                 if(ret == 0) {
                     ret = err;
                 }
             }
+#endif
             probe_cobj_compute_flag(probe_out);
 
             if(ret != 0) {
@@ -214,12 +221,14 @@ static int probe_executor_exec_nocache(probe_executor_t *exec, SEXP_t *oid, prob
                     dE("probe_executor_exec_nocache: Failed to run probe handler for variable reference");
                 }
 
+#ifdef OVAL_ICACHE_THREAD_ENABLED
                 if((err = probe_icache_nop(exec->icache)) != 0) {
                     dE("probe_executor_exec_nocache: Failed to sync with icache");
                     if(ret == 0) {
                         ret = err;
                     }
                 }
+#endif
                 probe_cobj_compute_flag(cobj);
 
                 aux = probe_out;

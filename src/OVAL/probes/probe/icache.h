@@ -35,12 +35,15 @@ typedef struct {
         SEXP_t *cobj;
         union {
                 SEXP_t         *item;
+#ifdef OVAL_ICACHE_THREAD_ENABLED
                 pthread_cond_t *cond;
+#endif
         } p;
 } probe_iqpair_t;
 
 typedef struct {
         rbt_t    *tree; /* XXX: rewrite to extensible or linear hashing */
+#ifdef OVAL_ICACHE_THREAD_ENABLED
         pthread_t thid;
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
@@ -55,6 +58,7 @@ typedef struct {
         uint16_t        queue_end;
         uint16_t        queue_cnt;
         uint16_t        queue_max;
+#endif
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
 #ifndef HAVE_ATOMIC_BUILTINS
@@ -70,11 +74,15 @@ typedef struct {
 } probe_citem_t;
 
 probe_icache_t *probe_icache_new(void);
+#ifdef OVAL_ICACHE_THREAD_ENABLED
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
 int probe_icache_wait(probe_icache_t *cache);
 #endif
+#endif
 int probe_icache_add(probe_icache_t *cache, SEXP_t *cobj, SEXP_t *item);
+#ifdef OVAL_ICACHE_THREAD_ENABLED
 int probe_icache_nop(probe_icache_t *cache);
+#endif
 void probe_icache_free(probe_icache_t *cache);
 
 #endif /* ICACHE_H */
