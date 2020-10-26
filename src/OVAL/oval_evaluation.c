@@ -11,6 +11,8 @@
 #include <oscap_source.h>
 #include <debug_priv.h>
 
+#include "oval_definitions_impl.h"
+
 static const char *oscap_productname = "cpe:/a:open-scap:oscap";
 
 struct oval_evaluation {
@@ -147,7 +149,11 @@ static int oval_evaluator_load_definitions(oval_evaluator_t *evaluator) {
     evaluator->def_model = oval_definition_model_import_source(evaluator->oval.definitions);
     if(evaluator->def_model == NULL) {
         ret = 1;
+        goto fail;
     }
+
+    // Moved from oval_agent_session_new
+    oval_definition_model_optimize_by_filter_propagation(evaluator->def_model);
 
 fail:
     return ret;

@@ -103,8 +103,10 @@ oval_agent_session_t * oval_agent_new_session(struct oval_definition_model *mode
 
 	dI("Started new OVAL agent %s.", name);
 
+#ifndef OVAL_EXTERNAL_PROBES_ENABLED
 	/* Optimalization */
 	oval_definition_model_optimize_by_filter_propagation(model);
+#endif
 
 	oval_agent_session_t *ag_sess = malloc(sizeof(oval_agent_session_t));
 	ag_sess->filename = oscap_strdup(name);
