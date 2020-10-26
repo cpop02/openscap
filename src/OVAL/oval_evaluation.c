@@ -75,7 +75,7 @@ oval_evaluator_t* oval_evaluator_new(const char *filename) {
 
     __attribute__nonnull__(filename);
 
-    evaluator = (oval_evaluator_t*)malloc(sizeof(oval_evaluator_t));
+    evaluator = (oval_evaluator_t*)calloc(1, sizeof(oval_evaluator_t));
     if(evaluator == NULL) {
         goto fail;
     }
@@ -97,6 +97,8 @@ cleanup:
 
 void oval_evaluator_free(oval_evaluator_t *evaluator) {
     if(evaluator != NULL) {
+        oval_definition_model_free(evaluator->def_model);
+        // oscap_source_free(evaluator->oval.definitions);
         oscap_source_free(evaluator->source);
     }
     free(evaluator);

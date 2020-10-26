@@ -1658,14 +1658,18 @@ static oval_syschar_collection_flag_t _oval_component_evaluate_CONCAT(oval_argu_
 		for (idx0 = 0; idx0 < len_subcomps; idx0++) {
 			if (counts[idx0]) {
 				oval_value_iterator_free(values[idx0]);
-				oval_collection_free_items(component_colls[idx0],
-							   (oscap_destruct_func) oval_value_free);
 			}
 		}
 		free(counts);
 		free(texts);
 		free(values);
 	}
+    for (idx0 = 0; idx0 < len_subcomps; idx0++) {
+        if (component_colls[idx0] != NULL) {
+            oval_collection_free_items(component_colls[idx0],
+                                       (oscap_destruct_func) oval_value_free);
+        }
+    }
 	free(component_colls);
 	oval_component_iterator_free(subcomps);
 	return flag;
