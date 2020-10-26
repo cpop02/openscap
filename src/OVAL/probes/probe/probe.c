@@ -181,7 +181,7 @@ int probe_varref_iterate_ctx(struct probe_varref_ctx *ctx)
         next_val_idx = &ent->next_val_idx;
         ent_name_sref = ent->ent_name_sref;
     }
-    r1 = SEXP_list_replace(ent_name_sref, 3, r2 = SEXP_number_newu(*next_val_idx));
+    r1 = SEXP_list_replace(ent_name_sref, 3, (r2 = SEXP_number_newu(*next_val_idx)));
 
     SEXP_free(r0);
     SEXP_free(r1);

@@ -624,7 +624,7 @@ SEXP_t *probe_cobj_new(oval_syschar_collection_flag_t flag, SEXP_t *msg_list, SE
 	msg_list = (msg_list == NULL) ? SEXP_list_new(NULL) : SEXP_ref(msg_list);
 	item_list = (item_list == NULL) ? SEXP_list_new(NULL) : SEXP_ref(item_list);
         mask_list = mask_list == NULL ? SEXP_list_new(NULL) : SEXP_ref(mask_list);
-	cobj = SEXP_list_new(r0 = SEXP_number_newu(flag),
+	cobj = SEXP_list_new((r0 = SEXP_number_newu(flag)),
 			     msg_list,
 			     item_list,
                              mask_list,

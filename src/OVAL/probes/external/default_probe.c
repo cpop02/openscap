@@ -151,11 +151,10 @@ static int probe_collect_external_probe_item(probe_ctx *ctx, oval_subtype_t type
         goto fail;
     }
     ret = probe_item_collect(ctx, probe_item);
-    if(ret != 0) {
-        goto fail;
+    if(ret == 0 || ret == 1) {
+        ret = 0;
+        goto cleanup;
     }
-
-    goto cleanup;
 
 fail:
     SEXP_free(probe_item);

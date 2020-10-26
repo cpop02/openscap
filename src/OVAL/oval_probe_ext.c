@@ -1148,7 +1148,7 @@ int oval_probe_ext_handler_exec(oval_pext_t *pext, oval_subtype_t type, struct o
     }
     ret = oval_sexp_to_sysch(out, syschar);
 
-    fail:
+fail:
     SEXP_free(out);
     SEXP_free(query);
 

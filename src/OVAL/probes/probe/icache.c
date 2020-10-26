@@ -223,8 +223,8 @@ static void *probe_icache_worker(void *arg) {
 #endif
 
     if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
-            dE("An error ocured while locking the queue mutex: %u, %s", errno, strerror(errno));
-            return (NULL);
+        dE("An error occurred while locking the queue mutex: %u, %s", errno, strerror(errno));
+        return (NULL);
     }
 
 	pair = &pair_mem;
@@ -250,10 +250,10 @@ static void *probe_icache_worker(void *arg) {
             return NULL;
         }
         do {
-           dD("Extracting item from the cache queue: cnt=%"PRIu16", beg=%"PRIu16"", cache->queue_cnt, cache->queue_beg);
-           /*
-            * Extract an item from the queue and update queue beg, end & cnt
-            */
+            dD("Extracting item from the cache queue: cnt=%"PRIu16", beg=%"PRIu16"", cache->queue_cnt, cache->queue_beg);
+            /*
+             * Extract an item from the queue and update queue beg, end & cnt
+             */
             pair_mem = cache->queue[cache->queue_beg];
 #ifndef NDEBUG
 		    memset(cache->queue + cache->queue_beg, 0, sizeof(probe_iqpair_t));
@@ -274,15 +274,15 @@ static void *probe_icache_worker(void *arg) {
             dD("Signaling `notfull'");
 
             if(pthread_cond_signal(&cache->queue_notfull) != 0) {
-                dE("An error ocured while signaling the `notfull' condition: %u, %s", errno, strerror(errno));
+                dE("An error occurred while signaling the `notfull' condition: %u, %s", errno, strerror(errno));
                 abort();
             }
             /*
              * Release the mutex
              */
             if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
-                dE("An error ocured while unlocking the queue mutex: %u, %s", errno, strerror(errno));
-               abort();
+                dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
+                abort();
             }
 
             if(pair->cobj == NULL) {
@@ -295,8 +295,9 @@ static void *probe_icache_worker(void *arg) {
 
                 dD("Handling NOP");
 
-                if(pthread_cond_signal(pair->p.cond) != 0) {
-                    dE("An error ocured while signaling NOP condition: %u, %s", errno, strerror(errno));
+                int ret;
+                if((ret = pthread_cond_signal(pair->p.cond)) != 0) {
+                    dE("An error occurred while signaling NOP condition: %u, %s", ret, strerror(ret));
                     abort();
                 }
             } else {
@@ -311,7 +312,7 @@ static void *probe_icache_worker(void *arg) {
                 dD("item ID=%"PRIu64"", item_ID);
 
 #ifdef OVAL_EXTERNAL_PROBES_ENABLED
-                if (icache_lookup(cache, item_ID, pair) != 0) {
+                if(icache_lookup(cache, item_ID, pair) != 0) {
 #else
                 if(icache_lookup(cache->tree, item_ID, pair) != 0) {
 #endif
@@ -327,15 +328,15 @@ static void *probe_icache_worker(void *arg) {
                 }
 
                 if(probe_cobj_add_item(pair->cobj, pair->p.item) != 0) {
-                    dW("An error ocured while adding the item to the collected object");
+                    dW("An error occurred while adding the item to the collected object");
                 }
             }
 
             if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
-                dE("An error ocured while re-locking the queue mutex: %u, %s", errno, strerror(errno));
+                dE("An error occurred while re-locking the queue mutex: %u, %s", errno, strerror(errno));
                 abort();
             }
-        } while (cache->queue_cnt > 0);
+        } while(cache->queue_cnt > 0);
     }
 
     return (NULL);
@@ -434,131 +435,117 @@ static int __probe_icache_add_nolock(probe_icache_t *cache, SEXP_t *cobj, SEXP_t
 		return -1;
 	}
 retry:
-        if (cache->queue_cnt < cache->queue_max) {
-                cache->queue[cache->queue_end].cobj = cobj;
-
-                if (item != NULL) {
-					if (cobj == NULL) {
-						return -1;
-					}
-                        cache->queue[cache->queue_end].p.item = item;
-                } else {
-					if (item != NULL || cobj != NULL) {
-						return -1;
-					}
-                        cache->queue[cache->queue_end].p.cond = cond;
+    if(cache->queue_cnt < cache->queue_max) {
+        if(item != NULL) {
+            if(cobj == NULL) {
+                return -1;
+            }
+            cache->queue[cache->queue_end].p.item = item;
+        } else {
+            if(item != NULL || cobj != NULL) {
+                return -1;
+            }
+            cache->queue[cache->queue_end].p.cond = cond;
 		}
+        cache->queue[cache->queue_end].cobj = cobj;
 
-                ++cache->queue_cnt;
+        ++cache->queue_cnt;
 		++cache->queue_end;
 
-                if (cache->queue_end == cache->queue_max)
-                        cache->queue_end = 0;
-        } else {
-                /*
-                 * The queue is full, we have to wait
-                 */
-                if (pthread_cond_wait(&cache->queue_notfull, &cache->queue_mutex) == 0)
-                        goto retry;
-                else {
-                        dE("An error ocured while waiting for the `notfull' queue condition: %u, %s",
-                           errno, strerror(errno));
-                        return (-1);
-                }
+        if(cache->queue_end == cache->queue_max) {
+            cache->queue_end = 0;
         }
+    } else {
+        /*
+         * The queue is full, we have to wait
+         */
+        if(pthread_cond_wait(&cache->queue_notfull, &cache->queue_mutex) == 0) {
+            goto retry;
+        } else {
+            dE("An error occurred while waiting for the `notfull' queue condition: %u, %s", errno, strerror(errno));
+            return (-1);
+        }
+    }
 
-        return (0);
+    return (0);
 }
 
 int probe_icache_add(probe_icache_t *cache, SEXP_t *cobj, SEXP_t *item) {
         int ret;
 
-        if (cache == NULL || cobj == NULL || item == NULL)
-                return (-1); /* XXX: EFAULT */
-
-        if (pthread_mutex_lock(&cache->queue_mutex) != 0) {
-                dE("An error ocured while locking the queue mutex: %u, %s",
-                   errno, strerror(errno));
-                return (-1);
+        if(cache == NULL || cobj == NULL || item == NULL) {
+            return (-1); /* XXX: EFAULT */
         }
 
+        if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
+            dE("An error occurred while locking the queue mutex: %u, %s", errno, strerror(errno));
+            return (-1);
+        }
         ret = __probe_icache_add_nolock(cache, cobj, item, NULL);
-
-        if (pthread_cond_signal(&cache->queue_notempty) != 0) {
-                dE("An error ocured while signaling the `notempty' condition: %u, %s",
-                   errno, strerror(errno));
-                return (-1);
+        if(pthread_cond_signal(&cache->queue_notempty) != 0 && ret == 0) {
+            dE("An error occurred while signaling the `notempty' condition: %u, %s", errno, strerror(errno));
+            ret = -1;
         }
-
-        if (pthread_mutex_unlock(&cache->queue_mutex) != 0) {
-                dE("An error ocured while unlocking the queue mutex: %u, %s",
-                   errno, strerror(errno));
-                abort();
+        if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
+            dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
+            abort();
         }
-
-        if (ret != 0)
-                return (-1);
+        if(ret != 0) {
+            return (-1);
+        }
 
         return (0);
 }
 
 int probe_icache_nop(probe_icache_t *cache) {
-        pthread_cond_t cond;
+    pthread_cond_t cond;
 
-        dD("NOP");
+    memset(&cond, 0, sizeof(pthread_cond_t));
 
-        if (pthread_mutex_lock(&cache->queue_mutex) != 0) {
-                dE("An error ocured while locking the queue mutex: %u, %s",
-                   errno, strerror(errno));
-                return (-1);
+    dD("NOP");
+
+    if(pthread_mutex_lock(&cache->queue_mutex) != 0) {
+        dE("An error occurred while locking the queue mutex: %u, %s", errno, strerror(errno));
+        return (-1);
+    }
+    if(pthread_cond_init(&cond, NULL) != 0) {
+        dE("Can't initialize icache queue condition variable (NOP): %u, %s", errno, strerror(errno));
+        return (-1);
+    }
+    if(__probe_icache_add_nolock(cache, NULL, NULL, &cond) != 0) {
+        if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
+            dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
+            abort();
         }
-
-        if (pthread_cond_init(&cond, NULL) != 0) {
-                dE("Can't initialize icache queue condition variable (NOP): %u, %s",
-                   errno, strerror(errno));
-                return (-1);
-        }
-
-        if (__probe_icache_add_nolock(cache, NULL, NULL, &cond) != 0) {
-                if (pthread_mutex_unlock(&cache->queue_mutex) != 0) {
-                        dE("An error ocured while unlocking the queue mutex: %u, %s",
-                           errno, strerror(errno));
-                        abort();
-                }
-
-                pthread_cond_destroy(&cond);
-                return (-1);
-        }
-
-        dD("Signaling `notempty'");
-
-        if (pthread_cond_signal(&cache->queue_notempty) != 0) {
-                dE("An error ocured while signaling the `notempty' condition: %u, %s",
-                   errno, strerror(errno));
-
-                pthread_cond_destroy(&cond);
-                return (-1);
-        }
-
-        dD("Waiting for icache worker to handle the NOP");
-
-        if (pthread_cond_wait(&cond, &cache->queue_mutex) != 0) {
-                dE("An error ocured while waiting for the `NOP' queue condition: %u, %s",
-                   errno, strerror(errno));
-                return (-1);
-        }
-
-        dD("Sync");
-
-        if (pthread_mutex_unlock(&cache->queue_mutex) != 0) {
-                dE("An error ocured while unlocking the queue mutex: %u, %s",
-                   errno, strerror(errno));
-                abort();
-        }
-
         pthread_cond_destroy(&cond);
+        return (-1);
+    }
 
-        return (0);
+    dD("Signaling `notempty'");
+
+    if(pthread_cond_signal(&cache->queue_notempty) != 0) {
+        dE("An error occurred while signaling the `notempty' condition: %u, %s", errno, strerror(errno));
+        pthread_cond_destroy(&cond);
+        return (-1);
+    }
+
+    dD("Waiting for icache worker to handle the NOP");
+
+    if(pthread_cond_wait(&cond, &cache->queue_mutex) != 0) {
+        dE("An error occurred while waiting for the `NOP' queue condition: %u, %s", errno, strerror(errno));
+        return (-1);
+    }
+
+    dD("Sync");
+
+    if(pthread_mutex_unlock(&cache->queue_mutex) != 0) {
+        dE("An error occurred while unlocking the queue mutex: %u, %s", errno, strerror(errno));
+        abort();
+    }
+
+    pthread_cond_destroy(&cond);
+
+    return (0);
 }
 
 #define PROBE_RESULT_MEMCHECK_CTRESHOLD  32768  /* item count */
@@ -620,7 +607,7 @@ int probe_item_collect(struct probe_ctx *ctx, SEXP_t *item) {
 	SEXP_t *cobj_content;
 	size_t  cobj_itemcnt;
 
-	if (ctx == NULL || ctx->probe_out == NULL || item == NULL) {
+	if(ctx == NULL || ctx->probe_out == NULL || item == NULL) {
 		return -1;
 	}
 
@@ -628,24 +615,23 @@ int probe_item_collect(struct probe_ctx *ctx, SEXP_t *item) {
 	cobj_itemcnt = SEXP_list_length(cobj_content);
 	SEXP_free(cobj_content);
 
-	if (probe_cobj_memcheck(cobj_itemcnt) != 0) {
-
+	if(probe_cobj_memcheck(cobj_itemcnt) != 0) {
 		/*
 		 * Don't set the message again if the collected object is
 		 * already flagged as incomplete.
 		 */
-		if (probe_cobj_get_flag(ctx->probe_out) != SYSCHAR_FLAG_INCOMPLETE) {
+		if(probe_cobj_get_flag(ctx->probe_out) != SYSCHAR_FLAG_INCOMPLETE) {
 			SEXP_t *msg;
 			/*
 			 * Sync with the icache thread before modifying the
 			 * collected object.
 			 */
-			if (probe_icache_nop(ctx->icache) != 0)
-				return -1;
+			if(probe_icache_nop(ctx->icache) != 0) {
+                return -1;
+            }
 
 			msg = probe_msg_creat(OVAL_MESSAGE_LEVEL_WARNING,
 			                      "Object is incomplete due to memory constraints.");
-
 			probe_cobj_add_msg(ctx->probe_out, msg);
 			probe_cobj_set_flag(ctx->probe_out, SYSCHAR_FLAG_INCOMPLETE);
 
@@ -654,16 +640,15 @@ int probe_item_collect(struct probe_ctx *ctx, SEXP_t *item) {
 
 		return 2;
 	}
-
-        if (ctx->filters != NULL && probe_item_filtered(item, ctx->filters)) {
-                SEXP_free(item);
-		return (1);
+        if(ctx->filters != NULL && probe_item_filtered(item, ctx->filters)) {
+            SEXP_free(item);
+    		return (1);
         }
 
-        if (probe_icache_add(ctx->icache, ctx->probe_out, item) != 0) {
-                dE("Can't add item (%p) to the item cache (%p)", item, ctx->icache);
-                SEXP_free(item);
-                return (-1);
+        if(probe_icache_add(ctx->icache, ctx->probe_out, item) != 0) {
+            dE("Can't add item (%p) to the item cache (%p)", item, ctx->icache);
+            SEXP_free(item);
+            return (-1);
         }
 
         return (0);
