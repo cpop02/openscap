@@ -55,6 +55,7 @@ int default_probe_main(probe_ctx *ctx, void *arg) {
         ret = PROBE_EOPNOTSUPP;
         goto fail;
     }
+    dD("default_probe: Calling external probe handler for OVAL ID %s", str_id);
     ext_res = ext_probe_handler(ext_probe_data, ctx->probe_type, str_id);
     if(ext_res == NULL) {
         dE("default_probe: External probe handler failed");
