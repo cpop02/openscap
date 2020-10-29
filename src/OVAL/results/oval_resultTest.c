@@ -662,7 +662,6 @@ static inline oval_result_t _evaluate_sysent(struct oval_syschar_model *syschar_
 	if (oval_sysent_get_status(item_entity) == SYSCHAR_STATUS_DOES_NOT_EXIST) {
 		return OVAL_RESULT_FALSE;
 	} else if (oval_entity_get_varref_type(state_entity) == OVAL_ENTITY_VARREF_ATTRIBUTE) {
-
 		return _evaluate_sysent_with_variable(syschar_model,
 				state_entity, item_entity,
 				state_entity_operation, content);
@@ -895,18 +894,34 @@ static oval_result_t eval_check_state(struct oval_test *test, void **args)
 
 		ores_clear(&ste_ores);
 
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+		bool cont = true;
+		dD("State evaluation for op %d started", ste_check);
+#endif
 		ste_itr = oval_test_get_states(test);
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+		while (cont && oval_state_iterator_has_more(ste_itr)) {
+#else
 		while (oval_state_iterator_has_more(ste_itr)) {
+#endif
 			struct oval_state *ste;
 			oval_result_t ste_res;
 
 			ste = oval_state_iterator_next(ste_itr);
 			ste_res = eval_item(syschar_model, item, ste);
 			ores_add_res(&ste_ores, ste_res);
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+			item_res = ores_get_result_byopr_lazy(&ste_ores, ste_opr, &cont);
+			if (!cont) {
+				dI("State evaluation for op %d ended early due to lazy evaluation", ste_check);
+			}
+#endif
 		}
 		oval_state_iterator_free(ste_itr);
 
+#ifndef OVAL_LAZY_EVALUATION_ENABLED
 		item_res = ores_get_result_byopr(&ste_ores, ste_opr);
+#endif
 		ores_add_res(&item_ores, item_res);
 		oval_result_item_set_result(ritem, item_res);
 	}
