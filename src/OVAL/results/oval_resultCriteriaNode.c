@@ -362,7 +362,7 @@ static oval_result_t _oval_result_criteria_node_result(struct oval_result_criter
 				result = ores_get_result_byopr_lazy(&node_res, operator, &cont);
 #ifndef NDEBUG
 				if (!cont) {
-					dI("Criteria evaluation for op %d ended early due to lazy evaluation", operator);
+					dD("Criteria evaluation for op %d ended early due to lazy evaluation", operator);
 				}
 #endif
 #endif

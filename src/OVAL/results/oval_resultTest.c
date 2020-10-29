@@ -863,6 +863,13 @@ static oval_result_t eval_check_state(struct oval_test *test, void **args)
 		free(state_names);
 	}
 
+// TODO: Lazy evaluation at items level
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+#ifndef NDEBUG
+	dI("State evaluation for check %d started", ste_check);
+#endif
+#endif
+
 	ritems_itr = oval_result_test_get_items(TEST);
 	while (oval_result_item_iterator_has_more(ritems_itr)) {
 		struct oval_result_item *ritem;
@@ -896,7 +903,9 @@ static oval_result_t eval_check_state(struct oval_test *test, void **args)
 
 #ifdef OVAL_LAZY_EVALUATION_ENABLED
 		bool cont = true;
-		dD("State evaluation for op %d started", ste_check);
+#ifndef NDEBUG
+		dD("Item state evaluation for op %d started", ste_opr);
+#endif
 #endif
 		ste_itr = oval_test_get_states(test);
 #ifdef OVAL_LAZY_EVALUATION_ENABLED
@@ -912,9 +921,11 @@ static oval_result_t eval_check_state(struct oval_test *test, void **args)
 			ores_add_res(&ste_ores, ste_res);
 #ifdef OVAL_LAZY_EVALUATION_ENABLED
 			item_res = ores_get_result_byopr_lazy(&ste_ores, ste_opr, &cont);
+#ifndef NDEBUG
 			if (!cont) {
-				dI("State evaluation for op %d ended early due to lazy evaluation", ste_check);
+				dD("Item state evaluation for op %d ended early due to lazy evaluation", ste_opr);
 			}
+#endif
 #endif
 		}
 		oval_state_iterator_free(ste_itr);
