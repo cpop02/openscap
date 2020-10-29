@@ -342,16 +342,35 @@ static oval_result_t _oval_result_criteria_node_result(struct oval_result_criter
 			    = oval_result_criteria_node_get_subnodes(node);
 			oval_operator_t operator = oval_result_criteria_node_get_operator(node);
 			struct oresults node_res;
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+			bool cont = true;
+#ifndef NDEBUG
+			dD("Criteria evaluation for op %d started", operator);
+#endif
+#endif
 			ores_clear(&node_res);
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+			while (cont && oval_result_criteria_node_iterator_has_more(subnodes)) {
+#else
 			while (oval_result_criteria_node_iterator_has_more(subnodes)) {
+#endif
 				struct oval_result_criteria_node *subnode
 				    = oval_result_criteria_node_iterator_next(subnodes);
 				oval_result_t subres = oval_result_criteria_node_eval(subnode);
 				ores_add_res(&node_res, subres);
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+				result = ores_get_result_byopr_lazy(&node_res, operator, &cont);
+#ifndef NDEBUG
+				if (!cont) {
+					dI("Criteria evaluation for op %d ended early due to lazy evaluation", operator);
+				}
+#endif
+#endif
 			}
 			oval_result_criteria_node_iterator_free(subnodes);
+#ifndef OVAL_LAZY_EVALUATION_ENABLED
 			result = ores_get_result_byopr(&node_res, operator);
-
+#endif
 		} break;
 	case OVAL_NODETYPE_CRITERION:{
 			struct oval_result_test *test = oval_result_criteria_node_get_test(node);

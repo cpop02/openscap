@@ -61,6 +61,13 @@ typedef struct oval_result_test {
 	bool bindings_initialized;
 } oval_result_test_t;
 
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+static inline oval_result_t ores_get_result_byopr_and(struct oresults *ores, bool *pcont);
+static inline oval_result_t ores_get_result_byopr_or(struct oresults *ores, bool *pcont);
+static inline oval_result_t ores_get_result_byopr_xor(struct oresults *ores, bool *pcont);
+static inline oval_result_t ores_get_result_byopr_one(struct oresults *ores, bool *pcont);
+#endif
+
 struct oval_result_test *oval_result_test_new(struct oval_result_system *sys, char *tstid)
 {
 	oval_result_test_t *test = (oval_result_test_t *)
@@ -380,6 +387,151 @@ oval_result_t ores_get_result_byopr(struct oresults *ores, oval_operator_t op)
 
 	return result;
 }
+
+#ifdef OVAL_LAZY_EVALUATION_ENABLED
+oval_result_t ores_get_result_byopr_lazy(struct oresults *ores, oval_operator_t op, bool *pcont)
+{
+	// Continue until a definite answer can be provided
+	oval_result_t result = OVAL_RESULT_ERROR;
+
+	if (ores->true_cnt == 0 &&
+	    ores->false_cnt == 0 &&
+	    ores->error_cnt == 0 &&
+	    ores->unknown_cnt == 0 &&
+	    ores->notappl_cnt == 0 &&
+	    ores->noteval_cnt == 0) {
+		*pcont = false;
+		return OVAL_RESULT_UNKNOWN;
+	}
+	if (ores->notappl_cnt > 0 &&
+	    ores->noteval_cnt == 0 &&
+	    ores->false_cnt == 0 && 
+		ores->error_cnt == 0 && 
+		ores->unknown_cnt == 0 && 
+		ores->true_cnt == 0) {
+		*pcont = false;
+		return OVAL_RESULT_NOT_APPLICABLE;
+	}
+
+	switch (op) {
+	case OVAL_OPERATOR_AND:
+		result = ores_get_result_byopr_and(ores, pcont);
+		break;
+	case OVAL_OPERATOR_ONE:
+		result = ores_get_result_byopr_one(ores, pcont);
+		break;
+	case OVAL_OPERATOR_OR:
+		result = ores_get_result_byopr_or(ores, pcont);
+		break;
+	case OVAL_OPERATOR_XOR:
+		result = ores_get_result_byopr_xor(ores, pcont);
+		break;
+	default:
+		oscap_seterr(OSCAP_EFAMILY_OSCAP, "Invalid operator value: %d", op);
+		*pcont = false;
+		result = OVAL_RESULT_ERROR;
+		break;
+	}
+
+	return result;
+}
+
+static inline oval_result_t ores_get_result_byopr_and(struct oresults *ores, bool *pcont)
+{
+	// Continue until definitely not true
+	bool cont = true;
+	oval_result_t result = OVAL_RESULT_ERROR;
+	if (ores->false_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_FALSE;
+	} else if (ores->error_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_ERROR;
+	} else if (ores->unknown_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_UNKNOWN;
+	} else if (ores->noteval_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_NOT_EVALUATED;
+	} else if (ores->true_cnt > 0) {
+		result = OVAL_RESULT_TRUE;
+	}
+	*pcont = cont;
+	return result;
+}
+
+static inline oval_result_t ores_get_result_byopr_or(struct oresults *ores, bool *pcont)
+{
+	// Continue until definitely true
+	bool cont = true;
+	oval_result_t result = OVAL_RESULT_ERROR;
+	if (ores->true_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_TRUE;
+	} else if (ores->false_cnt > 0) {
+		result = OVAL_RESULT_FALSE;
+	} else if (ores->error_cnt > 0) {
+		result = OVAL_RESULT_ERROR;
+	} else if (ores->unknown_cnt > 0) {
+		result = OVAL_RESULT_UNKNOWN;
+	} else if (ores->noteval_cnt > 0) {
+		result = OVAL_RESULT_NOT_EVALUATED;
+	}
+	*pcont = cont;
+	return result;
+}
+
+static inline oval_result_t ores_get_result_byopr_xor(struct oresults *ores, bool *pcont)
+{
+	// Behaves like an odd-parity gate (not quite logical xor gate)
+	// Continue until definitely not true or false
+	bool cont = true;
+	oval_result_t result = OVAL_RESULT_ERROR;
+	if (ores->error_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_ERROR;
+	} else if (ores->unknown_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_UNKNOWN;
+	} else if (ores->noteval_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_NOT_EVALUATED;
+	} else if ((ores->true_cnt % 2) == 1) {
+		result = OVAL_RESULT_TRUE;
+	} else if ((ores->true_cnt % 2) == 0) {
+		result = OVAL_RESULT_FALSE;
+	}
+	*pcont = cont;
+	return result;
+}
+
+static inline oval_result_t ores_get_result_byopr_one(struct oresults *ores, bool *pcont)
+{
+	// Behaves like a logical xor gate
+	// Continue until definitely not true
+	bool cont = true;
+	oval_result_t result = OVAL_RESULT_ERROR;
+	if (ores->error_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_ERROR;
+	} else if (ores->unknown_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_UNKNOWN;
+	} else if (ores->noteval_cnt > 0) {
+		cont = false;
+		result = OVAL_RESULT_NOT_EVALUATED;
+	} else if (ores->true_cnt > 1) {
+		cont = false;
+		result = OVAL_RESULT_FALSE;
+	} else if (ores->true_cnt == 1) {
+		result = OVAL_RESULT_TRUE;
+	} else {
+		result = OVAL_RESULT_FALSE;
+	}
+	*pcont = cont;
+	return result;
+}
+#endif
 
 static inline oval_result_t _evaluate_sysent_with_variable(struct oval_syschar_model *syschar_model, struct oval_entity *state_entity, struct oval_sysent *item_entity, oval_operation_t state_entity_operation, struct oval_state_content *content)
 {

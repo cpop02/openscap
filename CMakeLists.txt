@@ -225,6 +225,7 @@ endif()
 
 option(ENABLE_PROBES "build OVAL probes - each probe implements an OVAL test" TRUE)
 option(ENABLE_EXTERNAL_PROBES "use an external API to collect probe results" TRUE)
+option(ENABLE_LAZY_EVALUATION "enables criteria lazy evaluation" TRUE)
 
 set(SEAP_MSGID_BITS 32 CACHE STRING "Size of SEAP_msgid_t in bits [32|64]")
 cmake_dependent_option(ENABLE_ICACHE_THREAD "use a dedicated thread for icache" OFF "ENABLE_EXTERNAL_PROBES" ON)
@@ -369,6 +370,7 @@ message(STATUS "OVAL:")
 message(STATUS "base probe support: ${ENABLE_PROBES}")
 message(STATUS "external probe support: ${ENABLE_EXTERNAL_PROBES}")
 message(STATUS "SEAP msgid bit-size: ${SEAP_MSGID_BITS}")
+message(STATUS "Lazy evaluation: ${ENABLE_LAZY_EVALUATION}")
 message(STATUS "icache thread enabled: ${ENABLE_ICACHE_THREAD}")
 
 message(STATUS "")
