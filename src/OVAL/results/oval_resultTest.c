@@ -877,7 +877,7 @@ static oval_result_t eval_check_state(struct oval_test *test, void **args)
 		oval_syschar_status_t item_status;
 		struct oresults ste_ores;
 		struct oval_state_iterator *ste_itr;
-		oval_result_t item_res;
+		oval_result_t item_res = OVAL_RESULT_UNKNOWN;
 
 		ritem = oval_result_item_iterator_next(ritems_itr);
 		item = oval_result_item_get_sysitem(ritem);

@@ -335,7 +335,7 @@ oval_result_t oval_result_criteria_node_negate(struct oval_result_criteria_node 
 static oval_result_t _oval_result_criteria_node_result(struct oval_result_criteria_node *node) {
 	__attribute__nonnull__(node);
 
-	oval_result_t result;
+	oval_result_t result = OVAL_RESULT_UNKNOWN;
 	switch (node->type) {
 	case OVAL_NODETYPE_CRITERIA:{
 			struct oval_result_criteria_node_iterator *subnodes
